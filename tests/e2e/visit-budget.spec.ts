@@ -226,12 +226,29 @@ async function withExtension(
     headless: true,
     reducedMotion: "reduce",
   });
+  const runtimeErrors: string[] = [];
+  context.on("page", (page) => {
+    page.on("console", (message) => {
+      if (message.type() === "error") {
+        runtimeErrors.push(message.text());
+      }
+    });
+    page.on("pageerror", (error) => {
+      runtimeErrors.push(error.message);
+    });
+  });
 
   try {
     const workers = context.serviceWorkers();
     const worker = workers[0] ?? (await context.waitForEvent("serviceworker"));
+    worker.on("console", (message) => {
+      if (message.type() === "error") {
+        runtimeErrors.push(message.text());
+      }
+    });
     const extensionId = new URL(worker.url()).hostname;
     await run({ context, extensionId });
+    expect(runtimeErrors).toEqual([]);
   } finally {
     await context.close();
     await rm(working, { force: true, recursive: true });
