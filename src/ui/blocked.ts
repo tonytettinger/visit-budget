@@ -8,7 +8,7 @@ let countdownTimer: number | undefined;
 
 requiredElement<HTMLButtonElement>("#go-back").addEventListener(
   "click",
-  goBack,
+  () => void leaveForNow(),
 );
 requiredElement<HTMLTextAreaElement>("#intention").addEventListener(
   "input",
@@ -104,11 +104,19 @@ async function usePass(): Promise<void> {
   }
 }
 
-function goBack(): void {
-  if (history.length > 1) {
-    history.back();
-  } else {
-    location.replace("about:blank");
+async function leaveForNow(): Promise<void> {
+  const button = requiredElement<HTMLButtonElement>("#go-back");
+  button.disabled = true;
+  renderError("");
+  try {
+    await sendRequest({ type: "OPEN_FRESH_TAB" });
+    const tab = await chrome.tabs.getCurrent();
+    if (tab?.id !== undefined) {
+      await chrome.tabs.remove(tab.id);
+    }
+  } catch (error) {
+    renderError(errorMessage(error));
+    button.disabled = false;
   }
 }
 

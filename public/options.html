@@ -111,7 +111,7 @@
                 </span>
               </label>
 
-              <label class="field">
+              <label class="field quick-add-advanced">
                 <span>Included paths</span>
                 <textarea
                   id="included-paths"
@@ -124,7 +124,7 @@
                 >
               </label>
 
-              <label class="field">
+              <label class="field quick-add-advanced">
                 <span>Excluded paths</span>
                 <textarea
                   id="excluded-paths"
@@ -137,7 +137,9 @@
                 >
               </label>
 
-              <label class="check-field lock-field form-full">
+              <label
+                class="check-field lock-field form-full quick-add-advanced"
+              >
                 <input id="daily-lock" type="checkbox" />
                 <span>
                   <strong>Lock changes until tomorrow</strong>
@@ -159,6 +161,15 @@
               </div>
 
               <p class="form-error form-full" id="form-error" role="alert"></p>
+
+              <button
+                class="text-button advanced-toggle form-full"
+                id="show-advanced"
+                type="button"
+                hidden
+              >
+                Show advanced options
+              </button>
 
               <div class="form-actions form-full">
                 <button class="button primary" type="submit">Save rule</button>

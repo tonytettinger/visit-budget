@@ -456,6 +456,15 @@ textarea:focus {
   grid-column: 1 / -1;
 }
 
+.rule-form-quick-add .quick-add-advanced {
+  display: none;
+}
+
+.advanced-toggle {
+  justify-self: start;
+  margin-top: -4px;
+}
+
 .field {
   display: grid;
   gap: 7px;

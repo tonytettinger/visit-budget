@@ -1,8 +1,7 @@
 import { parseRuleTarget } from "../core/rules";
-import type { RuleStatus, SiteRule } from "../core/types";
-import type { CurrentSiteView, SaveRuleResult } from "../shared/messages";
+import type { RuleStatus } from "../core/types";
+import type { CurrentSiteView } from "../shared/messages";
 import { errorMessage, requiredElement, sendRequest } from "./client";
-import { requestRulePermissionWithContext } from "./permission-consent";
 
 const content = requiredElement<HTMLElement>("#popup-content");
 const settingsIcon = requiredElement<HTMLButtonElement>("#open-settings-icon");
@@ -37,7 +36,7 @@ function render(view: CurrentSiteView): void {
     content.append(
       heading(view.hostname),
       summary("No visit rule is set for this website."),
-      untrackedActions(view.url),
+      untrackedActions(view.url, view.tabId),
     );
     return;
   }
@@ -133,10 +132,8 @@ function actions(ruleId?: string, permissionGranted = true): HTMLElement {
     container.append(manage);
 
     if (!permissionGranted) {
-      const grant = button("Grant website access", "secondary");
-      grant.addEventListener("click", () => {
-        void grantExistingRule(ruleId, grant);
-      });
+      const grant = button("Restore website access…", "secondary");
+      grant.addEventListener("click", () => openSettings(ruleId));
       container.append(grant);
     }
   }
@@ -146,75 +143,29 @@ function actions(ruleId?: string, permissionGranted = true): HTMLElement {
   return container;
 }
 
-function untrackedActions(url: string): HTMLElement {
+function untrackedActions(url: string, tabId?: number): HTMLElement {
   const container = create("div", "popup-actions");
-  const add = button("Limit this website", "primary");
-  add.addEventListener("click", () => {
-    void addCurrentSite(url, add);
-  });
+  const add = button("Set visit budget…", "primary");
+  add.addEventListener("click", () => openSetup(url, tabId));
   const settings = button("Open settings", "secondary");
   settings.addEventListener("click", () => openSettings());
   container.append(add, settings);
   return container;
 }
 
-async function addCurrentSite(
-  url: string,
-  trigger: HTMLButtonElement,
-): Promise<void> {
-  trigger.disabled = true;
+function openSetup(url: string, tabId?: number): void {
   try {
     const target = parseRuleTarget(url);
-    const rule: SiteRule = {
-      id: crypto.randomUUID(),
-      hostname: target.hostname,
-      includeSubdomains: true,
-      includePathPrefixes: ["/"],
-      excludePathPrefixes: [],
-      mode: "visit-limit",
-      dailyLimit: 3,
-      dailyLockEnabled: false,
-    };
-    if (
-      !(await requestRulePermissionWithContext(rule, {
-        alwaysExplain: true,
-      }))
-    ) {
-      throw new Error("Website access was not granted.");
+    const params = new URLSearchParams({ add: target.hostname });
+    if (tabId !== undefined) {
+      params.set("sourceTab", String(tabId));
     }
-    await sendRequest<SaveRuleResult>({ type: "SAVE_RULE", rule });
-    await load();
-  } catch (error) {
-    renderError(errorMessage(error));
-  } finally {
-    trigger.disabled = false;
-  }
-}
-
-async function grantExistingRule(
-  ruleId: string,
-  trigger: HTMLButtonElement,
-): Promise<void> {
-  trigger.disabled = true;
-  try {
-    const view = await sendRequest<CurrentSiteView>({
-      type: "GET_CURRENT_SITE",
-      ...(requestedTabId === undefined ? {} : { tabId: requestedTabId }),
+    void chrome.tabs.create({
+      url: chrome.runtime.getURL(`options.html?${params.toString()}`),
     });
-    if (view.status.kind === "untracked") {
-      throw new Error("The current website no longer matches this rule.");
-    }
-    if (view.status.rule.id !== ruleId) {
-      throw new Error("The active website changed.");
-    }
-    if (!(await requestRulePermissionWithContext(view.status.rule))) {
-      throw new Error("Website access was not granted.");
-    }
-    await load();
+    window.close();
   } catch (error) {
     renderError(errorMessage(error));
-  } finally {
-    trigger.disabled = false;
   }
 }
 

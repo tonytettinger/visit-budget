@@ -7,6 +7,7 @@ import {
 import { findMatchingRule } from "../core/rules";
 import { cancelPendingChange, deleteRule, saveRule } from "../core/state";
 import type {
+  EntryReceipt,
   EntryDecision,
   PersistedState,
   RuleStatus,
@@ -42,6 +43,7 @@ import type {
   ClientResponse,
   CurrentSiteView,
   GuardUpdate,
+  PageContext,
   StateView,
 } from "../shared/messages";
 import { isClientRequest } from "../shared/messages";
@@ -83,11 +85,15 @@ chrome.tabs.onActivated.addListener(({ tabId, windowId }) => {
   }).catch(reportError);
 });
 
-chrome.tabs.onRemoved.addListener((_tabId, removeInfo) => {
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   if (removeInfo.isWindowClosing) {
     return;
   }
-  void runExclusive(processCurrentActiveTab).catch(reportError);
+  void runExclusive(async () => {
+    const session = await loadSession();
+    await saveSession(removeEntryReceipt(session, tabId));
+    await processCurrentActiveTab();
+  }).catch(reportError);
 });
 
 chrome.windows.onFocusChanged.addListener((windowId) => {
@@ -204,12 +210,14 @@ async function handleRequest(
 ): Promise<
   | BlockedContext
   | CurrentSiteView
+  | PageContext
   | StateView
   | PersistedState
   | RuleStatus
   | EntryDecision
   | { scheduled: boolean; state: PersistedState }
   | { cancelled: true }
+  | { opened: true }
   | { expiresAt: number }
 > {
   switch (request.type) {
@@ -222,16 +230,11 @@ async function handleRequest(
     }
     case "GET_CURRENT_SITE":
       return getCurrentSiteView(request.tabId);
-    case "GET_PAGE_STATUS": {
-      if (sender.tab?.id !== undefined && sender.tab.active) {
-        await processActiveUrl(
-          sender.tab.id,
-          sender.tab.windowId,
-          sender.tab.url ?? request.url,
-        );
-      }
-      return statusForUrl(request.url);
-    }
+    case "GET_PAGE_CONTEXT":
+      return getPageContext(request.url, sender);
+    case "OPEN_FRESH_TAB":
+      await chrome.tabs.create({ active: true });
+      return { opened: true };
     case "GET_BLOCKED_CONTEXT":
       return getBlockedContext(request.ruleId);
     case "SAVE_RULE": {
@@ -261,6 +264,37 @@ async function handleRequest(
     case "START_EMERGENCY_PASS":
       return activateEmergencyPass(request.ruleId, request.intention);
   }
+}
+
+async function getPageContext(
+  url: string,
+  sender: chrome.runtime.MessageSender,
+): Promise<PageContext> {
+  const tabId = sender.tab?.id;
+  const status =
+    tabId !== undefined && sender.tab?.active
+      ? await processActiveUrl(
+          tabId,
+          sender.tab.windowId,
+          sender.tab.url ?? url,
+        )
+      : await statusForUrl(url);
+
+  if (tabId === undefined) {
+    return { status };
+  }
+
+  const session = await loadSession();
+  const receipt = session.entryReceiptByTab?.[String(tabId)];
+  if (!receipt) {
+    return { status };
+  }
+
+  await saveSession(removeEntryReceipt(session, tabId));
+  if (status.kind !== "available" || status.rule.id !== receipt.ruleId) {
+    return { status };
+  }
+  return { status, entryReceipt: receipt };
 }
 
 async function processNavigation(tabId: number, url: string): Promise<void> {
@@ -312,7 +346,7 @@ async function processActiveUrl(
     await saveSession(nextSession);
     const status = activeStatus(rule, state, nextSession, now);
     await updateBadge(status);
-    await notifyGuard(tabId, status, false, nextSession);
+    await notifyGuard(tabId, status, undefined, nextSession);
     return status;
   }
 
@@ -328,20 +362,47 @@ async function processActiveUrl(
   applyDecisionUsage(state, decision);
   await saveState(state);
 
-  const nextSession = sessionFromDecision(
+  const receipt =
+    decision.kind === "allow"
+      ? createEntryReceipt(rule, decision, now)
+      : undefined;
+  let nextSession = sessionFromDecision(
     session,
     decision,
     tabId,
     windowId,
     url,
   );
+  if (receipt) {
+    nextSession = addEntryReceipt(nextSession, tabId, receipt);
+  }
   await saveSession(nextSession);
   await reconcileBlockingIfNeeded(state, nextSession, now);
 
   const status = activeStatus(rule, state, nextSession, now);
   await updateBadge(status);
-  await notifyGuard(tabId, status, decision.kind === "allow", nextSession);
+  const delivered = await notifyGuard(tabId, status, receipt, nextSession);
+  if (receipt && delivered) {
+    nextSession = removeEntryReceipt(nextSession, tabId);
+    await saveSession(nextSession);
+  }
   return status;
+}
+
+function createEntryReceipt(
+  rule: SiteRule,
+  decision: Extract<EntryDecision, { kind: "allow" }>,
+  now: Date,
+): EntryReceipt {
+  return {
+    id: crypto.randomUUID(),
+    ruleId: rule.id,
+    hostname: rule.hostname,
+    visitsUsed: decision.usage.visitsUsed,
+    dailyLimit: rule.dailyLimit ?? 1,
+    remaining: decision.remaining,
+    createdAt: now.getTime(),
+  };
 }
 
 function applyDecisionUsage(
@@ -398,6 +459,41 @@ function clearActiveContext(
   delete next.activeRuleId;
   delete next.activeAccess;
   delete next.activeRemaining;
+  return removeEntryReceipt(next, tabId);
+}
+
+function addEntryReceipt(
+  session: SessionState,
+  tabId: number,
+  receipt: EntryReceipt,
+): SessionState {
+  return {
+    ...session,
+    entryReceiptByTab: {
+      ...session.entryReceiptByTab,
+      [String(tabId)]: receipt,
+    },
+  };
+}
+
+function removeEntryReceipt(
+  session: SessionState,
+  tabId: number,
+): SessionState {
+  if (!session.entryReceiptByTab?.[String(tabId)]) {
+    return session;
+  }
+  const entryReceiptByTab = Object.fromEntries(
+    Object.entries(session.entryReceiptByTab).filter(
+      ([candidateTabId]) => candidateTabId !== String(tabId),
+    ),
+  );
+  const next = { ...session };
+  if (Object.keys(entryReceiptByTab).length === 0) {
+    delete next.entryReceiptByTab;
+  } else {
+    next.entryReceiptByTab = entryReceiptByTab;
+  }
   return next;
 }
 
@@ -461,6 +557,7 @@ async function getCurrentSiteView(tabId?: number): Promise<CurrentSiteView> {
   const state = await loadState();
   const rule = findMatchingRule(url, state.rules);
   const response: CurrentSiteView = {
+    ...(tab?.id === undefined ? {} : { tabId: tab.id }),
     url,
     status: rule
       ? activeStatus(rule, state, await loadSession(), new Date())
@@ -574,7 +671,7 @@ async function refreshActiveGuard(): Promise<void> {
   }
   const status = await statusForUrl(session.activeUrl);
   await updateBadge(status);
-  await notifyGuard(session.activeTabId, status, false, session);
+  await notifyGuard(session.activeTabId, status, undefined, session);
 }
 
 async function refreshAllAccessibleGuards(
@@ -591,7 +688,7 @@ async function refreshAllAccessibleGuards(
       const status = rule
         ? activeStatus(rule, state, session, new Date())
         : ({ kind: "untracked" } as const);
-      await notifyGuard(tab.id, status, false, session);
+      await notifyGuard(tab.id, status, undefined, session);
     }),
   );
 }
@@ -599,13 +696,13 @@ async function refreshAllAccessibleGuards(
 async function notifyGuard(
   tabId: number,
   status: RuleStatus,
-  showToast: boolean,
+  entryReceipt: EntryReceipt | undefined,
   session: SessionState,
-): Promise<void> {
+): Promise<boolean> {
   const update: GuardUpdate = {
     type: "GUARD_UPDATE",
     status,
-    showToast,
+    ...(entryReceipt ? { entryReceipt } : {}),
   };
   const challengeIssuedAt =
     status.kind === "limit-reached" || status.kind === "permanently-blocked"
@@ -618,7 +715,12 @@ async function notifyGuard(
   ) {
     update.challengeReadyAt = challengeIssuedAt + EMERGENCY_CHALLENGE_MS;
   }
-  await chrome.tabs.sendMessage(tabId, update).catch(() => undefined);
+  try {
+    await chrome.tabs.sendMessage(tabId, update);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function requireRule(state: PersistedState, ruleId: string): SiteRule {

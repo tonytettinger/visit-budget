@@ -100,7 +100,11 @@ V1 includes:
 - One emergency pass per limited site per day.
 - Optional daily rule locks.
 - A toolbar popup, options page, blocked page, page-preserving overlay, and
-  remaining-visit notification.
+  durable visit-receipt notification with circular daily progress.
+- A toolbar quick-add handoff that opens a prefilled, durable setup page before
+  requesting Chrome host access.
+- A history-independent “Leave for now” action that opens a fresh tab. Existing
+  guarded tabs remain preserved beneath their overlay.
 - Local-only persistence and unpacked installation.
 
 V1 intentionally excludes:
@@ -119,6 +123,13 @@ V1 intentionally excludes:
 - Same-rule tabs, refreshes, and internal navigation do not double-count.
 - Re-entry from another effective rule counts exactly once.
 - Concurrent browser events cannot consume multiple visits for one transition.
+- Every consumed visit produces exactly one receipt showing visits used,
+  visits remaining, and circular progress; refreshes and internal navigation
+  do not.
+- Toolbar quick-add survives Chrome closing its action popup for the host
+  permission dialog.
+- “Leave for now” exits a newly blocked navigation without returning to the
+  blocked URL.
 - A blocked overlay preserves the underlying page and unsaved form contents.
 - Emergency access lasts 10 minutes and is available once per site per day.
 - Local-midnight reset and queued locked changes work after browser sleep or

@@ -134,7 +134,46 @@ test("guards already-open tabs and preserves page state", async () => {
   });
 });
 
-test("popup can add the selected website", async () => {
+test("shows one durable progress receipt for each consumed entry", async () => {
+  await withExtension(async ({ context, extensionId }) => {
+    const options = await context.newPage();
+    await addRule(options, extensionId, {
+      website: "127.0.0.1",
+      mode: "visit-limit",
+      limit: 3,
+    });
+
+    const page = await context.newPage();
+    await page.goto(primaryUrl());
+    const receipt = page.locator("#visit-budget-guard-root-toast");
+    await expect(receipt).toHaveAttribute(
+      "aria-label",
+      "Visit 1 of 3 for 127.0.0.1. 2 visits remaining today.",
+    );
+    if (process.env.CAPTURE_QA) {
+      await page.setViewportSize({ width: 1000, height: 700 });
+      await page.screenshot({
+        path: "/tmp/visit-budget-entry-receipt.png",
+        fullPage: false,
+      });
+    }
+
+    await page.reload();
+    await expect(receipt).toHaveCount(0);
+
+    await page.goto(`${primaryUrl()}?internal=1`);
+    await expect(receipt).toHaveCount(0);
+
+    await page.goto(awayUrl());
+    await page.goto(primaryUrl());
+    await expect(receipt).toHaveAttribute(
+      "aria-label",
+      "Visit 2 of 3 for 127.0.0.1. 1 visit remaining today.",
+    );
+  });
+});
+
+test("popup opens a durable prefilled setup flow", async () => {
   await withExtension(async ({ context, extensionId }) => {
     const target = await context.newPage();
     await target.goto(primaryUrl());
@@ -154,50 +193,55 @@ test("popup can add the selected website", async () => {
     await expect(
       popup.getByRole("heading", { name: "127.0.0.1" }),
     ).toBeVisible();
-    await popup.getByRole("button", { name: "Limit this website" }).click();
+    const setupPagePromise = context.waitForEvent("page");
+    await popup.getByRole("button", { name: "Set visit budget…" }).click();
+    const setup = await setupPagePromise;
+    await setup.waitForLoadState();
     await expect(
-      popup.getByRole("heading", {
-        name: "Allow protection for 127.0.0.1?",
+      setup.getByRole("heading", {
+        name: "Set visit budget",
       }),
     ).toBeVisible();
-    await expect(popup.getByText("Local by design")).toBeVisible();
+    await expect(setup.locator("#website")).toHaveValue("127.0.0.1");
     await expect(
-      popup.getByText("127.0.0.1 only", { exact: true }),
+      setup.getByRole("button", { name: "Show advanced options" }),
     ).toBeVisible();
+    await expect(
+      setup.getByRole("button", { name: "Save rule" }),
+    ).toBeInViewport();
     if (process.env.CAPTURE_QA) {
-      await popup.setViewportSize({ width: 360, height: 600 });
-      await expect(
-        popup.getByRole("button", { name: "Continue to Chrome" }),
-      ).toBeInViewport();
-      await popup.screenshot({
-        path: "/tmp/visit-budget-permission-popup.png",
+      await setup.setViewportSize({ width: 1000, height: 720 });
+      await setup.screenshot({
+        path: "/tmp/visit-budget-quick-add-prefilled.png",
         fullPage: false,
       });
     }
-    await popup.getByRole("button", { name: "Not now" }).click();
+    await setup.getByRole("button", { name: "Save rule" }).click();
     await expect(
-      popup.getByText("Website access was not granted."),
+      setup.getByRole("heading", {
+        name: "Allow protection for 127.0.0.1?",
+      }),
     ).toBeVisible();
-    await expect(
-      popup.getByRole("button", { name: "Manage rule" }),
-    ).toHaveCount(0);
-    await popup.getByRole("button", { name: "Limit this website" }).click();
-    await popup.getByRole("button", { name: "Continue to Chrome" }).click();
-    await expect(
-      popup.getByRole("button", { name: "Manage rule" }),
-    ).toBeVisible();
-
+    await expect(setup.getByText("Local by design")).toBeVisible();
     if (process.env.CAPTURE_QA) {
-      await popup.setViewportSize({ width: 360, height: 520 });
-      await popup.screenshot({
-        path: "/tmp/visit-budget-popup.png",
-        fullPage: true,
+      await setup.setViewportSize({ width: 900, height: 720 });
+      await setup.screenshot({
+        path: "/tmp/visit-budget-quick-add-permission.png",
+        fullPage: false,
       });
     }
+    const setupClosed = setup.waitForEvent("close");
+    await setup.getByRole("button", { name: "Continue to Chrome" }).click();
+    await setupClosed;
 
-    const options = await context.newPage();
-    await options.goto(`chrome-extension://${extensionId}/options.html`);
-    await expect(options.getByText("127.0.0.1")).toBeVisible();
+    await inspector.reload();
+    await expect(inspector.getByText("127.0.0.1")).toBeVisible();
+    await expect(
+      target.locator("#visit-budget-guard-root-toast"),
+    ).toHaveAttribute(
+      "aria-label",
+      "Visit 1 of 3 for 127.0.0.1. 2 visits remaining today.",
+    );
   });
 });
 
@@ -226,6 +270,15 @@ test("permanent blocks redirect before destination content is shown", async () =
         fullPage: true,
       });
     }
+
+    const freshPagePromise = context.waitForEvent("page");
+    const blockedPageClosed = page.waitForEvent("close");
+    await page.getByRole("button", { name: "Leave for now" }).click();
+    const freshPage = await freshPagePromise;
+    await blockedPageClosed;
+    expect(freshPage.url()).not.toContain(
+      `chrome-extension://${extensionId}/blocked.html`,
+    );
   });
 });
 

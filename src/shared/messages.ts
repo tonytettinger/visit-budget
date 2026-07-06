@@ -1,4 +1,5 @@
 import type {
+  EntryReceipt,
   EntryDecision,
   PendingRuleChange,
   PersistedState,
@@ -9,11 +10,12 @@ import type {
 export type ClientRequest =
   | { type: "GET_STATE" }
   | { type: "GET_CURRENT_SITE"; tabId?: number }
-  | { type: "GET_PAGE_STATUS"; url: string }
+  | { type: "GET_PAGE_CONTEXT"; url: string }
   | { type: "GET_BLOCKED_CONTEXT"; ruleId: string }
   | { type: "SAVE_RULE"; rule: SiteRule }
   | { type: "DELETE_RULE"; ruleId: string }
   | { type: "CANCEL_PENDING_CHANGE"; ruleId: string }
+  | { type: "OPEN_FRESH_TAB" }
   | {
       type: "START_EMERGENCY_PASS";
       ruleId: string;
@@ -21,10 +23,16 @@ export type ClientRequest =
     };
 
 export interface CurrentSiteView {
+  tabId?: number;
   url?: string;
   hostname?: string;
   status: RuleStatus;
   permissionGranted: boolean;
+}
+
+export interface PageContext {
+  status: RuleStatus;
+  entryReceipt?: EntryReceipt;
 }
 
 export interface BlockedContext {
@@ -62,9 +70,11 @@ export type ClientPayload =
   | SaveRuleResult
   | StateView
   | PendingRuleChange
+  | PageContext
   | RuleStatus
   | PersistedState
-  | { cancelled: true };
+  | { cancelled: true }
+  | { opened: true };
 
 export type ClientResponse =
   { ok: true; payload: ClientPayload } | { ok: false; error: string };
@@ -72,7 +82,7 @@ export type ClientResponse =
 export interface GuardUpdate {
   type: "GUARD_UPDATE";
   status: RuleStatus;
-  showToast: boolean;
+  entryReceipt?: EntryReceipt;
   challengeReadyAt?: number;
 }
 

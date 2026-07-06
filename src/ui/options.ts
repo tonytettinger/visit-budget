@@ -19,8 +19,12 @@ let view: StateView = {
   },
   permissionByRule: {},
 };
-let selectedRuleId: string | undefined =
-  new URLSearchParams(location.search).get("rule") ?? undefined;
+const pageParams = new URLSearchParams(location.search);
+let requestedDraftWebsite = parseDraftWebsite(pageParams.get("add"));
+const sourceTabId = parseTabId(pageParams.get("sourceTab"));
+let quickAddActive =
+  requestedDraftWebsite !== undefined && sourceTabId !== undefined;
+let selectedRuleId: string | undefined = pageParams.get("rule") ?? undefined;
 let toastTimer: number | undefined;
 
 const form = requiredElement<HTMLFormElement>("#rule-form");
@@ -34,6 +38,7 @@ const includedPaths = requiredElement<HTMLTextAreaElement>("#included-paths");
 const excludedPaths = requiredElement<HTMLTextAreaElement>("#excluded-paths");
 const dailyLock = requiredElement<HTMLInputElement>("#daily-lock");
 const formError = requiredElement<HTMLElement>("#form-error");
+const showAdvanced = requiredElement<HTMLButtonElement>("#show-advanced");
 
 requiredElement<HTMLButtonElement>("#add-rule").addEventListener("click", () =>
   selectRule(undefined),
@@ -54,6 +59,10 @@ requiredElement<HTMLButtonElement>("#grant-permission").addEventListener(
   "click",
   () => void grantSelectedPermission(),
 );
+showAdvanced.addEventListener("click", () => {
+  form.classList.remove("rule-form-quick-add");
+  showAdvanced.hidden = true;
+});
 mode.addEventListener("change", updateModeVisibility);
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -65,13 +74,28 @@ void reload();
 async function reload(preferredRuleId = selectedRuleId): Promise<void> {
   try {
     view = await sendRequest<StateView>({ type: "GET_STATE" });
-    selectedRuleId =
-      preferredRuleId &&
-      view.state.rules.some((rule) => rule.id === preferredRuleId)
-        ? preferredRuleId
-        : view.state.rules[0]?.id;
+    if (requestedDraftWebsite) {
+      selectedRuleId = undefined;
+    } else {
+      selectedRuleId =
+        preferredRuleId &&
+        view.state.rules.some((rule) => rule.id === preferredRuleId)
+          ? preferredRuleId
+          : view.state.rules[0]?.id;
+    }
     renderRules();
     renderEditor();
+    if (requestedDraftWebsite) {
+      website.value = requestedDraftWebsite;
+      requiredElement<HTMLElement>("#editor-heading").textContent =
+        "Set visit budget";
+      requiredElement<HTMLElement>("#editor-subtitle").textContent =
+        `Review the rule for ${requestedDraftWebsite}.`;
+      form.classList.add("rule-form-quick-add");
+      showAdvanced.hidden = false;
+      requestedDraftWebsite = undefined;
+      website.focus();
+    }
   } catch (error) {
     showFormError(errorMessage(error));
   }
@@ -124,6 +148,8 @@ function renderEditor(): void {
   const permission = requiredElement<HTMLElement>("#permission-notice");
 
   form.reset();
+  form.classList.remove("rule-form-quick-add");
+  showAdvanced.hidden = true;
   includeSubdomains.checked = true;
   dailyLimit.value = "3";
   includedPaths.value = "/";
@@ -152,6 +178,7 @@ function renderEditor(): void {
 }
 
 function selectRule(ruleId: string | undefined): void {
+  quickAddActive = false;
   selectedRuleId = ruleId;
   renderRules();
   renderEditor();
@@ -189,10 +216,19 @@ async function submitRule(): Promise<void> {
     ) {
       throw new Error("Chrome access is required to enforce this rule.");
     }
+    const returnAfterSave = quickAddActive ? sourceTabId : undefined;
     const result = await sendRequest<SaveRuleResult>({
       type: "SAVE_RULE",
       rule,
     });
+    if (returnAfterSave !== undefined && !result.scheduled) {
+      try {
+        await returnToSourceTab(returnAfterSave);
+        return;
+      } catch {
+        quickAddActive = false;
+      }
+    }
     await reload(rule.id);
     showToast(
       result.scheduled ? "Change scheduled for tomorrow." : "Rule saved.",
@@ -201,6 +237,14 @@ async function submitRule(): Promise<void> {
     showFormError(errorMessage(error));
   } finally {
     submit.disabled = false;
+  }
+}
+
+async function returnToSourceTab(tabId: number): Promise<void> {
+  await chrome.tabs.update(tabId, { active: true });
+  const currentTab = await chrome.tabs.getCurrent();
+  if (currentTab?.id !== undefined && currentTab.id !== tabId) {
+    await chrome.tabs.remove(currentTab.id);
   }
 }
 
@@ -258,6 +302,25 @@ async function grantSelectedPermission(): Promise<void> {
 
 function selectedRule(): SiteRule | undefined {
   return view.state.rules.find((rule) => rule.id === selectedRuleId);
+}
+
+function parseDraftWebsite(value: string | null): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  try {
+    return parseRuleTarget(value).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+function parseTabId(value: string | null): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 function statusLabel(rule: SiteRule): string {

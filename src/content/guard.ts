@@ -1,10 +1,11 @@
-import type { RuleStatus } from "../core/types";
+import type { EntryReceipt, RuleStatus } from "../core/types";
 import type {
   BlockedContext,
   ClientRequest,
   ClientResponse,
   EmergencyPassResult,
   GuardUpdate,
+  PageContext,
 } from "../shared/messages";
 
 declare global {
@@ -21,7 +22,7 @@ if (!window.__visitBudgetGuardInstalled) {
   installCurtain();
   chrome.runtime.onMessage.addListener((message: unknown) => {
     if (isGuardUpdate(message)) {
-      void applyStatus(message.status, message.showToast);
+      void applyStatus(message.status, message.entryReceipt);
     }
   });
   void initialCheck();
@@ -29,11 +30,11 @@ if (!window.__visitBudgetGuardInstalled) {
 
 async function initialCheck(): Promise<void> {
   try {
-    const status = await sendRequest<RuleStatus>({
-      type: "GET_PAGE_STATUS",
+    const context = await sendRequest<PageContext>({
+      type: "GET_PAGE_CONTEXT",
       url: location.href,
     });
-    await applyStatus(status, false);
+    await applyStatus(context.status, context.entryReceipt);
   } catch {
     removeCurtain();
   }
@@ -41,7 +42,7 @@ async function initialCheck(): Promise<void> {
 
 async function applyStatus(
   status: RuleStatus,
-  showToast: boolean,
+  entryReceipt?: EntryReceipt,
 ): Promise<void> {
   switch (status.kind) {
     case "untracked":
@@ -51,16 +52,13 @@ async function applyStatus(
     case "available":
       removeGate();
       removeCurtain();
-      if (showToast) {
-        showRemainingToast(status.rule.hostname, status.remaining);
+      if (entryReceipt) {
+        showEntryReceiptToast(entryReceipt);
       }
       return;
     case "emergency-access":
       removeGate();
       removeCurtain();
-      if (showToast) {
-        showRemainingToast(status.rule.hostname, undefined, true);
-      }
       return;
     case "limit-reached":
     case "permanently-blocked": {
@@ -181,7 +179,7 @@ function renderGate(context: BlockedContext): void {
         <p class="reset"></p>
         <hr class="divider">
         <div class="actions">
-          <button class="primary back" type="button">Go back</button>
+          <button class="primary leave" type="button">Leave for now</button>
         </div>
         <div class="pass-area"></div>
         <p class="error" role="alert"></p>
@@ -197,9 +195,9 @@ function renderGate(context: BlockedContext): void {
     context.rule.hostname;
   requiredElement<HTMLElement>(shadow, ".reset").textContent =
     `Resets at ${context.resetLabel}`;
-  requiredElement<HTMLButtonElement>(shadow, ".back").addEventListener(
+  requiredElement<HTMLButtonElement>(shadow, ".leave").addEventListener(
     "click",
-    goBack,
+    () => void leaveForNow(shadow),
   );
 
   const passArea = requiredElement<HTMLElement>(shadow, ".pass-area");
@@ -213,7 +211,7 @@ function renderGate(context: BlockedContext): void {
   }
 
   document.documentElement.append(host);
-  requiredElement<HTMLButtonElement>(shadow, ".back").focus();
+  requiredElement<HTMLButtonElement>(shadow, ".leave").focus();
 }
 
 function renderPassForm(
@@ -259,7 +257,7 @@ function renderPassForm(
         clearInterval(timer);
         removeGate();
         removeCurtain();
-        showRemainingToast(context.rule.hostname, undefined, true);
+        showEmergencyToast(context.rule.hostname);
       })
       .catch((caught: unknown) => {
         error.textContent = errorMessage(caught);
@@ -269,40 +267,165 @@ function renderPassForm(
   update();
 }
 
-function showRemainingToast(
-  hostname: string,
-  remaining?: number,
-  emergency = false,
-): void {
+function showEntryReceiptToast(receipt: EntryReceipt): void {
+  const detail =
+    receipt.remaining === 0
+      ? "Next re-entry will be blocked"
+      : `${receipt.remaining} ${
+          receipt.remaining === 1 ? "visit" : "visits"
+        } remaining today`;
+  showToast({
+    ariaLabel: `Visit ${receipt.visitsUsed} of ${receipt.dailyLimit} for ${receipt.hostname}. ${detail}.`,
+    detail,
+    headline: `Visit ${receipt.visitsUsed} of ${receipt.dailyLimit}`,
+    hostname: receipt.hostname,
+    progress: Math.min(100, (receipt.visitsUsed / receipt.dailyLimit) * 100),
+    ringLabel: `${receipt.visitsUsed}/${receipt.dailyLimit}`,
+  });
+}
+
+function showEmergencyToast(hostname: string): void {
+  showToast({
+    ariaLabel: `${hostname}: emergency access is active for 10 minutes.`,
+    detail: "Emergency access is active for 10 minutes",
+    headline: "Emergency access",
+    hostname,
+    progress: 100,
+    ringLabel: "10m",
+  });
+}
+
+interface ToastContent {
+  ariaLabel: string;
+  detail: string;
+  headline: string;
+  hostname: string;
+  progress: number;
+  ringLabel: string;
+}
+
+function showToast(content: ToastContent): void {
   const existing = document.getElementById(`${ROOT_ID}-toast`);
   existing?.remove();
   const host = document.createElement("div");
   host.id = `${ROOT_ID}-toast`;
+  host.setAttribute("aria-label", content.ariaLabel);
+  host.setAttribute("aria-live", "polite");
+  host.setAttribute("role", "status");
   const shadow = host.attachShadow({ mode: "closed" });
   shadow.innerHTML = `
     <style>
+      :host { all: initial; }
       .toast {
-        background: #17191f;
-        border-radius: 9px;
-        box-shadow: 0 10px 30px rgba(20, 26, 38, 0.18);
-        color: #fff;
-        font: 600 13px/1.35 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        max-width: 300px;
-        padding: 11px 14px;
+        align-items: center;
+        background: #fff;
+        border: 1px solid #d8dce5;
+        border-radius: 12px;
+        box-shadow: 0 12px 34px rgba(20, 26, 38, 0.16);
+        color: #17191f;
+        display: grid;
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        gap: 12px;
+        grid-template-columns: 48px minmax(0, 1fr);
+        max-width: min(320px, calc(100vw - 36px));
+        padding: 12px 14px 12px 12px;
+        pointer-events: none;
         position: fixed;
         right: 18px;
         top: 18px;
+        width: max-content;
         z-index: 2147483647;
       }
+      .ring {
+        height: 48px;
+        position: relative;
+        width: 48px;
+      }
+      svg {
+        height: 48px;
+        overflow: visible;
+        transform: rotate(-90deg);
+        width: 48px;
+      }
+      circle {
+        fill: none;
+        stroke-width: 3.5;
+      }
+      .track { stroke: #dfe7f7; }
+      .meter {
+        stroke: #155de0;
+        stroke-linecap: round;
+        transition: stroke-dasharray 180ms ease-out;
+      }
+      .ring-label {
+        align-items: center;
+        display: flex;
+        font-size: 11px;
+        font-weight: 750;
+        inset: 0;
+        justify-content: center;
+        letter-spacing: -0.02em;
+        position: absolute;
+      }
+      .hostname {
+        color: #5f6673;
+        font-size: 10px;
+        font-weight: 650;
+        letter-spacing: 0.03em;
+        margin: 0 0 2px;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.25;
+      }
+      .detail {
+        color: #5f6673;
+        font-size: 11px;
+        line-height: 1.35;
+        margin: 3px 0 0;
+      }
+      @media (max-width: 480px) {
+        .toast {
+          max-width: calc(100vw - 24px);
+          right: 12px;
+          top: 12px;
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .toast { animation: enter 160ms ease-out; }
+        @keyframes enter {
+          from { opacity: 0; transform: translateY(-4px); }
+        }
+      }
     </style>
-    <div class="toast" role="status"></div>
+    <div class="toast">
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 48 48">
+          <circle class="track" cx="24" cy="24" r="20" pathLength="100"></circle>
+          <circle class="meter" cx="24" cy="24" r="20" pathLength="100"></circle>
+        </svg>
+        <span class="ring-label"></span>
+      </div>
+      <div>
+        <p class="hostname"></p>
+        <strong></strong>
+        <p class="detail"></p>
+      </div>
+    </div>
   `;
-  const text = emergency
-    ? `${hostname}: emergency access is active for 10 minutes`
-    : `${hostname}: ${remaining ?? 0} ${
-        remaining === 1 ? "visit" : "visits"
-      } remaining today`;
-  requiredElement<HTMLElement>(shadow, ".toast").textContent = text;
+  requiredElement<SVGCircleElement>(shadow, ".meter").style.strokeDasharray =
+    `${content.progress} 100`;
+  requiredElement<HTMLElement>(shadow, ".ring-label").textContent =
+    content.ringLabel;
+  requiredElement<HTMLElement>(shadow, ".hostname").textContent =
+    content.hostname;
+  requiredElement<HTMLElement>(shadow, "strong").textContent = content.headline;
+  requiredElement<HTMLElement>(shadow, ".detail").textContent = content.detail;
   document.documentElement.append(host);
   window.setTimeout(() => host.remove(), 4_000);
 }
@@ -311,11 +434,16 @@ function removeGate(): void {
   document.getElementById(ROOT_ID)?.remove();
 }
 
-function goBack(): void {
-  if (history.length > 1) {
-    history.back();
-  } else {
-    location.replace("about:blank");
+async function leaveForNow(shadow: ShadowRoot): Promise<void> {
+  const button = requiredElement<HTMLButtonElement>(shadow, ".leave");
+  const error = requiredElement<HTMLElement>(shadow, ".error");
+  button.disabled = true;
+  error.textContent = "";
+  try {
+    await sendRequest({ type: "OPEN_FRESH_TAB" });
+  } catch (caught) {
+    error.textContent = errorMessage(caught);
+    button.disabled = false;
   }
 }
 

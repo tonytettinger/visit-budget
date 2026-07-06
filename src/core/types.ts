@@ -26,6 +26,16 @@ export interface PendingRuleChange {
   replacement?: SiteRule;
 }
 
+export interface EntryReceipt {
+  id: string;
+  ruleId: string;
+  hostname: string;
+  visitsUsed: number;
+  dailyLimit: number;
+  remaining: number;
+  createdAt: number;
+}
+
 export interface PersistedState {
   schemaVersion: 1;
   localDate: string;
@@ -43,6 +53,7 @@ export interface SessionState {
   activeAccess?: "allowed" | "emergency-access" | "blocked";
   activeRemaining?: number;
   emergencyChallengeByRule?: Record<string, number>;
+  entryReceiptByTab?: Record<string, EntryReceipt>;
 }
 
 export type EntryDecision =
