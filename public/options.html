@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en" data-surface="options">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visit Budget settings</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="options-shell">
+      <header class="options-header">
+        <div>
+          <div class="brand brand-large">
+            <span class="brand-mark" aria-hidden="true">VB</span>
+            <span>Visit Budget</span>
+          </div>
+          <p>Make automatic browsing a conscious choice.</p>
+        </div>
+        <button class="button primary compact" id="add-rule" type="button">
+          Add website
+        </button>
+      </header>
+
+      <div class="options-grid">
+        <section class="rules-pane" aria-labelledby="rules-heading">
+          <div class="pane-heading">
+            <div>
+              <h1 id="rules-heading">Rules</h1>
+              <p id="rule-count">0 websites</p>
+            </div>
+          </div>
+          <div class="rule-list" id="rule-list"></div>
+          <div class="empty-state" id="empty-state" hidden>
+            <span class="empty-mark" aria-hidden="true">+</span>
+            <h2>No website rules yet</h2>
+            <p>Add one site you catch yourself checking automatically.</p>
+          </div>
+        </section>
+
+        <section class="editor-pane" aria-labelledby="editor-heading">
+          <form id="rule-form">
+            <div class="pane-heading editor-heading">
+              <div>
+                <h2 id="editor-heading">Add website</h2>
+                <p id="editor-subtitle">
+                  Choose how this website should behave.
+                </p>
+              </div>
+              <button
+                class="text-button danger"
+                id="delete-rule"
+                type="button"
+                hidden
+              >
+                Delete
+              </button>
+            </div>
+
+            <div class="pending-notice" id="pending-notice" hidden>
+              <div>
+                <strong>Change scheduled for tomorrow</strong>
+                <p>The current locked rule remains active today.</p>
+              </div>
+              <button class="text-button" id="cancel-pending" type="button">
+                Cancel change
+              </button>
+            </div>
+
+            <div class="form-stack">
+              <label class="field form-full">
+                <span>Website</span>
+                <input
+                  id="website"
+                  name="website"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="off"
+                  placeholder="example.com or example.com/path"
+                  required
+                />
+                <small>HTTP and HTTPS websites are supported.</small>
+              </label>
+
+              <label class="field">
+                <span>Mode</span>
+                <select id="mode" name="mode">
+                  <option value="visit-limit">Limit daily visits</option>
+                  <option value="permanent-block">Block completely</option>
+                </select>
+              </label>
+
+              <label class="field" id="limit-field">
+                <span>Daily visits</span>
+                <input
+                  id="daily-limit"
+                  name="dailyLimit"
+                  type="number"
+                  min="1"
+                  max="999"
+                  step="1"
+                  value="3"
+                  required
+                />
+              </label>
+
+              <label class="check-field form-full">
+                <input id="include-subdomains" type="checkbox" checked />
+                <span>
+                  <strong>Include subdomains</strong>
+                  <small>Includes www and other subdomains.</small>
+                </span>
+              </label>
+
+              <label class="field">
+                <span>Included paths</span>
+                <textarea
+                  id="included-paths"
+                  rows="2"
+                  placeholder="/"
+                ></textarea>
+                <small
+                  >One prefix per line or comma-separated. “/” includes the
+                  whole site.</small
+                >
+              </label>
+
+              <label class="field">
+                <span>Excluded paths</span>
+                <textarea
+                  id="excluded-paths"
+                  rows="2"
+                  placeholder="/work, /saved"
+                ></textarea>
+                <small
+                  >Excluded paths never consume visits or get blocked by this
+                  rule.</small
+                >
+              </label>
+
+              <label class="check-field lock-field form-full">
+                <input id="daily-lock" type="checkbox" />
+                <span>
+                  <strong>Lock changes until tomorrow</strong>
+                  <small
+                    >Edits or deletion will wait for the daily reset.</small
+                  >
+                </span>
+              </label>
+
+              <div
+                class="permission-notice form-full"
+                id="permission-notice"
+                hidden
+              >
+                Chrome access is required for this website.
+                <button class="text-button" id="grant-permission" type="button">
+                  Grant access
+                </button>
+              </div>
+
+              <p class="form-error form-full" id="form-error" role="alert"></p>
+
+              <div class="form-actions form-full">
+                <button class="button primary" type="submit">Save rule</button>
+                <button class="button secondary" id="cancel-edit" type="button">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <footer class="options-footer">
+        <span>Your data stays on your device.</span>
+        <span>Visit Budget 0.1.0</span>
+      </footer>
+      <div class="app-toast" id="app-toast" role="status" hidden></div>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
