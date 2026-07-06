@@ -1,8 +1,8 @@
 import { parseRuleTarget } from "../core/rules";
 import type { RuleStatus, SiteRule } from "../core/types";
-import { requestRulePermission } from "../platform/permissions";
 import type { CurrentSiteView, SaveRuleResult } from "../shared/messages";
 import { errorMessage, requiredElement, sendRequest } from "./client";
+import { requestRulePermissionWithContext } from "./permission-consent";
 
 const content = requiredElement<HTMLElement>("#popup-content");
 const settingsIcon = requiredElement<HTMLButtonElement>("#open-settings-icon");
@@ -175,7 +175,11 @@ async function addCurrentSite(
       dailyLimit: 3,
       dailyLockEnabled: false,
     };
-    if (!(await requestRulePermission(rule))) {
+    if (
+      !(await requestRulePermissionWithContext(rule, {
+        alwaysExplain: true,
+      }))
+    ) {
       throw new Error("Website access was not granted.");
     }
     await sendRequest<SaveRuleResult>({ type: "SAVE_RULE", rule });
@@ -203,7 +207,7 @@ async function grantExistingRule(
     if (view.status.rule.id !== ruleId) {
       throw new Error("The active website changed.");
     }
-    if (!(await requestRulePermission(view.status.rule))) {
+    if (!(await requestRulePermissionWithContext(view.status.rule))) {
       throw new Error("Website access was not granted.");
     }
     await load();

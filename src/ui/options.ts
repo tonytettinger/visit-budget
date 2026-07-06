@@ -1,13 +1,13 @@
 import { getRuleStatus } from "../core/engine";
 import { normalizePathPrefixes, parseRuleTarget } from "../core/rules";
 import type { SiteRule } from "../core/types";
-import { requestRulePermission } from "../platform/permissions";
 import type {
   DeleteRuleResult,
   SaveRuleResult,
   StateView,
 } from "../shared/messages";
 import { errorMessage, requiredElement, sendRequest } from "./client";
+import { requestRulePermissionWithContext } from "./permission-consent";
 
 let view: StateView = {
   state: {
@@ -182,7 +182,11 @@ async function submitRule(): Promise<void> {
       rule.dailyLimit = Number(dailyLimit.value);
     }
 
-    if (!(await requestRulePermission(rule))) {
+    if (
+      !(await requestRulePermissionWithContext(rule, {
+        alwaysExplain: selectedRuleId === undefined,
+      }))
+    ) {
       throw new Error("Chrome access is required to enforce this rule.");
     }
     const result = await sendRequest<SaveRuleResult>({
@@ -242,7 +246,7 @@ async function grantSelectedPermission(): Promise<void> {
     return;
   }
   try {
-    if (!(await requestRulePermission(rule))) {
+    if (!(await requestRulePermissionWithContext(rule))) {
       throw new Error("Website access was not granted.");
     }
     await reload(rule.id);

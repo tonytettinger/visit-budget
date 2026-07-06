@@ -82,6 +82,11 @@ The extension requests:
   navigations before the destination page is shown.
 
 Host access is optional and requested only when you save a rule for that host.
+Before Chrome displays its standard host-access warning, Visit Budget explains
+the exact scope, the enforcement features that require it, and the local-only
+privacy model. The explanation appears for new websites and whenever an edit
+expands access, but not for ordinary edits whose access is already granted.
+Removing the final rule that needs a host also releases its access.
 The broad `tabs` permission is intentionally not requested. Navigation events
 for unconfigured sites are neither retained nor analyzed.
 

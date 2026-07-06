@@ -156,6 +156,34 @@ test("popup can add the selected website", async () => {
     ).toBeVisible();
     await popup.getByRole("button", { name: "Limit this website" }).click();
     await expect(
+      popup.getByRole("heading", {
+        name: "Allow protection for 127.0.0.1?",
+      }),
+    ).toBeVisible();
+    await expect(popup.getByText("Local by design")).toBeVisible();
+    await expect(
+      popup.getByText("127.0.0.1 only", { exact: true }),
+    ).toBeVisible();
+    if (process.env.CAPTURE_QA) {
+      await popup.setViewportSize({ width: 360, height: 600 });
+      await expect(
+        popup.getByRole("button", { name: "Continue to Chrome" }),
+      ).toBeInViewport();
+      await popup.screenshot({
+        path: "/tmp/visit-budget-permission-popup.png",
+        fullPage: false,
+      });
+    }
+    await popup.getByRole("button", { name: "Not now" }).click();
+    await expect(
+      popup.getByText("Website access was not granted."),
+    ).toBeVisible();
+    await expect(
+      popup.getByRole("button", { name: "Manage rule" }),
+    ).toHaveCount(0);
+    await popup.getByRole("button", { name: "Limit this website" }).click();
+    await popup.getByRole("button", { name: "Continue to Chrome" }).click();
+    await expect(
       popup.getByRole("button", { name: "Manage rule" }),
     ).toBeVisible();
 
@@ -285,6 +313,20 @@ async function addRule(
     await page.locator("#daily-limit").fill(String(input.limit ?? 1));
   }
   await page.getByRole("button", { name: "Save rule" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: `Allow protection for ${input.website}?`,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("Local by design")).toBeVisible();
+  if (process.env.CAPTURE_QA) {
+    await page.setViewportSize({ width: 900, height: 720 });
+    await page.screenshot({
+      path: "/tmp/visit-budget-permission-context.png",
+      fullPage: false,
+    });
+  }
+  await page.getByRole("button", { name: "Continue to Chrome" }).click();
   await expect(page.getByRole("status")).toHaveText("Rule saved.");
 }
 
