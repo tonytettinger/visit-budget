@@ -170,6 +170,25 @@ test("shows one durable progress receipt for each consumed entry", async () => {
       "aria-label",
       "Visit 2 of 3 for 127.0.0.1. 1 visit remaining today.",
     );
+
+    await page.goto(awayUrl());
+    await page.goto(primaryUrl());
+    await expect(receipt).toHaveAttribute(
+      "aria-label",
+      "Visit 3 of 3 for 127.0.0.1. Next re-entry will be blocked.",
+    );
+
+    await page.goto(awayUrl());
+    await waitForDynamicBlock(options, extensionId);
+    await page.goto(primaryUrl());
+    await expect(page).toHaveURL(
+      new RegExp(`chrome-extension://${extensionId}/blocked\\.html`),
+    );
+    await expect(
+      page.getByRole("heading", {
+        name: "Your visit budget is used for today",
+      }),
+    ).toBeVisible();
   });
 });
 
