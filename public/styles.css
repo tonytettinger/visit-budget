@@ -733,6 +733,47 @@ textarea {
   padding: 18px 2px 0;
 }
 
+.about-card {
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 18px 20px;
+}
+
+.about-card h2,
+.about-card p {
+  margin: 0;
+}
+
+.about-card h2 {
+  font-size: 16px;
+  letter-spacing: -0.015em;
+}
+
+.about-card p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.about-support {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.support-placeholder {
+  color: var(--muted);
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 4px 0;
+}
+
 .app-toast {
   background: var(--text);
   border-radius: 9px;
@@ -847,6 +888,15 @@ textarea {
 
   .form-stack {
     grid-template-columns: 1fr;
+  }
+
+  .about-card {
+    align-items: flex-start;
+    display: grid;
+  }
+
+  .about-support {
+    text-align: left;
   }
 }
 

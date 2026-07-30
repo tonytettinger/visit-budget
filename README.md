@@ -114,7 +114,9 @@ V1 intentionally excludes:
 - Accounts, cloud services, analytics, or AI.
 - Time-spent limits and historical usage dashboards.
 - OS-, router-, or enterprise-level enforcement.
-- Chrome Web Store submission.
+- Chrome Web Store publication. Submission materials are prepared in
+  `docs/chrome-web-store-submission.md`, but the extension has not been
+  published yet.
 
 ## Acceptance criteria
 
@@ -162,6 +164,18 @@ npm run test        # Unit tests
 npm run test:e2e    # Extension tests in Playwright Chromium
 npm run package     # Create a deterministic ZIP in artifacts/
 ```
+
+## Chrome Web Store preparation
+
+Visit Budget can be submitted as a free Chrome Web Store extension after you
+create a developer account and fill out the listing, privacy, and distribution
+fields. The prepared submission guide is in
+`docs/chrome-web-store-submission.md`, and the privacy-policy draft is in
+`docs/privacy-policy.md`.
+
+Keep any support or donation link optional and quiet. The options page includes
+a placeholder support area that should be replaced with your real Buy Me a
+Coffee, Ko-fi, GitHub Sponsors, or personal support URL before publishing.
 
 ## Architecture
 
