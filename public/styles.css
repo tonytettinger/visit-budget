@@ -130,6 +130,7 @@ button {
 
 .button:focus-visible,
 .icon-button:focus-visible,
+.maker-link:focus-visible,
 .text-button:focus-visible,
 .rule-row:focus-visible,
 input:focus,
@@ -761,17 +762,60 @@ textarea {
   margin-top: 4px;
 }
 
-.about-support {
+.about-maker {
   flex: 0 0 auto;
   text-align: right;
 }
 
-.support-placeholder {
+.maker-kicker,
+.maker-home {
   color: var(--muted);
-  display: inline-block;
-  font-size: 13px;
-  font-weight: 650;
-  padding: 4px 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.about-card .maker-kicker,
+.about-card .maker-home {
+  margin-top: 0;
+}
+
+.maker-link {
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(135deg, #155de0, #6c3df4) border-box;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--accent);
+  display: inline-flex;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 720;
+  gap: 4px;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  margin: 5px 0;
+  padding: 9px 13px 10px;
+  text-decoration: none;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.maker-link span {
+  color: #6c3df4;
+  font-style: italic;
+}
+
+.maker-link:hover {
+  background:
+    linear-gradient(#f8faff, #f8faff) padding-box,
+    linear-gradient(135deg, #155de0, #6c3df4) border-box;
+  box-shadow: 0 8px 24px rgba(21, 93, 224, 0.12);
+  color: #0f4fc4;
+  transform: translateY(-1px);
 }
 
 .app-toast {
@@ -895,7 +939,7 @@ textarea {
     display: grid;
   }
 
-  .about-support {
+  .about-maker {
     text-align: left;
   }
 }

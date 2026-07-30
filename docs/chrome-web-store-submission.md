@@ -106,22 +106,18 @@ https://github.com/YOUR_USERNAME/visit-budget/issues
 or:
 
 ```text
-https://YOUR_DOMAIN.example/support
+https://tettinger.dev/
 ```
 
 ### Homepage URL
 
-Use a simple public project page if you have one:
-
 ```text
-https://YOUR_DOMAIN.example/visit-budget
+https://tettinger.dev/
 ```
 
-or a GitHub repository:
-
-```text
-https://github.com/YOUR_USERNAME/visit-budget
-```
+If you later create a dedicated Visit Budget landing page, use that as the
+homepage URL and keep `https://tettinger.dev/` linked from the extension's
+options page.
 
 ## Privacy tab draft
 
@@ -219,19 +215,9 @@ Avoid:
 - Injecting affiliate codes
 - Any support message that appears while a user is blocked or frustrated
 
-Before publishing, replace the placeholder in:
-
-```text
-public/options.html
-```
-
-Current placeholder text:
-
-```text
-Support link coming soon
-```
-
-Suggested replacement:
+The options page currently links to Antal “Tony” Tettinger's homepage. If you
+later want a direct support link, prefer putting it on that homepage. If you
+decide to add a second in-extension link, keep it quiet and non-blocking:
 
 ```html
 <a

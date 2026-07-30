@@ -173,9 +173,9 @@ fields. The prepared submission guide is in
 `docs/chrome-web-store-submission.md`, and the privacy-policy draft is in
 `docs/privacy-policy.md`.
 
-Keep any support or donation link optional and quiet. The options page includes
-a placeholder support area that should be replaced with your real Buy Me a
-Coffee, Ko-fi, GitHub Sponsors, or personal support URL before publishing.
+Keep any support or donation link optional and quiet. The options page links to
+Antal “Tony” Tettinger's homepage at `https://tettinger.dev/`; a donation link
+can live there instead of inside the blocking flow.
 
 ## Architecture
 
