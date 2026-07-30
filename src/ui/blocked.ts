@@ -60,6 +60,7 @@ function render(value: BlockedContext): void {
   if (canUsePass) {
     countdownTimer = window.setInterval(updatePassButton, 250);
     updatePassButton();
+    requiredElement<HTMLTextAreaElement>("#intention").focus();
   }
 }
 

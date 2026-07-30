@@ -86,7 +86,11 @@ test("limits re-entry and grants one emergency pass", async () => {
 
     await makeEmergencyPauseReady(page);
     await page.reload();
-    await page.getByLabel("What do you intend to do?").fill("Finish the draft");
+    const intention = page.getByLabel("What do you intend to do?");
+    await expect(intention).toBeFocused();
+    await expect(intention).toHaveAttribute("inputmode", "text");
+    await intention.pressSequentially("Check my email, then leave");
+    await expect(intention).toHaveValue("Check my email, then leave");
     await page.getByRole("button", { name: "Use emergency pass" }).click();
 
     await expect(page).toHaveURL(primaryUrl());

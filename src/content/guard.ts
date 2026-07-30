@@ -222,7 +222,7 @@ function renderPassForm(
   area.innerHTML = `
     <p class="pass-note">One 10-minute pass remains. It starts after a 15-second pause.</p>
     <label for="visit-budget-intention">What do you intend to do?</label>
-    <textarea id="visit-budget-intention" maxlength="240"></textarea>
+    <textarea id="visit-budget-intention" maxlength="240" inputmode="text" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="For example: check one email, then leave"></textarea>
     <div class="actions" style="margin-top: 10px">
       <button class="secondary pass" type="button" disabled></button>
     </div>
@@ -245,6 +245,7 @@ function renderPassForm(
   };
   const timer = window.setInterval(update, 250);
   input.addEventListener("input", update);
+  input.focus();
   button.addEventListener("click", () => {
     button.disabled = true;
     error.textContent = "";

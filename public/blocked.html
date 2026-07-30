@@ -27,7 +27,16 @@
           </p>
           <label class="field intention-field">
             <span>What do you intend to do?</span>
-            <textarea id="intention" rows="3" maxlength="240"></textarea>
+            <textarea
+              id="intention"
+              rows="3"
+              maxlength="240"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="sentences"
+              spellcheck="true"
+              placeholder="For example: check one email, then leave"
+            ></textarea>
           </label>
           <button class="button secondary" id="use-pass" type="button" disabled>
             Use emergency pass
