@@ -363,6 +363,27 @@ test("permanent blocks redirect before destination content is shown", async () =
   });
 });
 
+test("stale blocked pages recover without extension errors", async () => {
+  await withExtension(async ({ context, extensionId }) => {
+    const page = await context.newPage();
+    await page.goto(
+      `chrome-extension://${extensionId}/blocked.html?rule=missing-rule#${primaryUrl()}`,
+    );
+
+    await expect(
+      page.getByRole("heading", { name: "This block is no longer active" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("The rule was changed or removed."),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "Use Leave for now, then open the website again if needed.",
+      ),
+    ).toBeVisible();
+  });
+});
+
 interface ExtensionHarness {
   context: BrowserContext;
   extensionId: string;

@@ -35,12 +35,17 @@ export interface PageContext {
   entryReceipt?: EntryReceipt;
 }
 
-export interface BlockedContext {
-  rule: SiteRule;
-  status: RuleStatus;
-  challengeReadyAt: number;
-  resetLabel: string;
-}
+export type BlockedContext =
+  | {
+      kind: "active-block";
+      rule: SiteRule;
+      status: Exclude<RuleStatus, { kind: "untracked" }>;
+      challengeReadyAt: number;
+      resetLabel: string;
+    }
+  | {
+      kind: "stale-rule";
+    };
 
 export interface StateView {
   state: PersistedState;

@@ -572,8 +572,13 @@ async function getCurrentSiteView(tabId?: number): Promise<CurrentSiteView> {
 
 async function getBlockedContext(ruleId: string): Promise<BlockedContext> {
   const state = await loadState();
-  const rule = requireRule(state, ruleId);
   const session = await loadSession();
+  const rule = state.rules.find((candidate) => candidate.id === ruleId);
+  if (!rule) {
+    await reconcileAll(state, session, false);
+    return { kind: "stale-rule" };
+  }
+
   const challenges = { ...(session.emergencyChallengeByRule ?? {}) };
   const issuedAt = challenges[ruleId] ?? Date.now();
   challenges[ruleId] = issuedAt;
@@ -581,9 +586,15 @@ async function getBlockedContext(ruleId: string): Promise<BlockedContext> {
     ...session,
     emergencyChallengeByRule: challenges,
   });
+  const status = getRuleStatus(rule, state.usageByRule[rule.id], new Date());
+  if (status.kind === "untracked") {
+    return { kind: "stale-rule" };
+  }
+
   return {
+    kind: "active-block",
     rule,
-    status: getRuleStatus(rule, state.usageByRule[rule.id], new Date()),
+    status,
     challengeReadyAt: issuedAt + EMERGENCY_CHALLENGE_MS,
     resetLabel: formatResetTime(new Date()),
   };

@@ -67,7 +67,12 @@ async function applyStatus(
         type: "GET_BLOCKED_CONTEXT",
         ruleId: status.rule.id,
       });
-      renderGate(context);
+      if (context.kind === "stale-rule") {
+        removeGate();
+        removeCurtain();
+      } else {
+        renderGate(context);
+      }
     }
   }
 }
@@ -94,7 +99,9 @@ function removeCurtain(): void {
   document.body.style.removeProperty("visibility");
 }
 
-function renderGate(context: BlockedContext): void {
+function renderGate(
+  context: Extract<BlockedContext, { kind: "active-block" }>,
+): void {
   removeGate();
   const host = document.createElement("div");
   host.id = ROOT_ID;
@@ -217,7 +224,7 @@ function renderGate(context: BlockedContext): void {
 function renderPassForm(
   shadow: ShadowRoot,
   area: HTMLElement,
-  context: BlockedContext,
+  context: Extract<BlockedContext, { kind: "active-block" }>,
 ): void {
   area.innerHTML = `
     <p class="pass-note">One 10-minute pass remains. It starts after a 15-second pause.</p>

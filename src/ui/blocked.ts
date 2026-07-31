@@ -32,6 +32,10 @@ async function load(): Promise<void> {
       type: "GET_BLOCKED_CONTEXT",
       ruleId,
     });
+    if (context.kind === "stale-rule") {
+      renderStaleRule();
+      return;
+    }
     if (context.status.kind === "emergency-access" && originalTarget) {
       location.replace(originalTarget);
       return;
@@ -42,7 +46,9 @@ async function load(): Promise<void> {
   }
 }
 
-function render(value: BlockedContext): void {
+function render(
+  value: Extract<BlockedContext, { kind: "active-block" }>,
+): void {
   const isPermanent = value.status.kind === "permanently-blocked";
   requiredElement<HTMLElement>("#blocked-title").textContent = isPermanent
     ? "This website is blocked"
@@ -64,10 +70,20 @@ function render(value: BlockedContext): void {
   }
 }
 
+function renderStaleRule(): void {
+  requiredElement<HTMLElement>("#blocked-title").textContent =
+    "This block is no longer active";
+  requiredElement<HTMLElement>("#blocked-site").textContent =
+    "The rule was changed or removed.";
+  requiredElement<HTMLElement>("#blocked-reset").textContent = "";
+  requiredElement<HTMLElement>("#pass-section").hidden = true;
+  renderError("Use Leave for now, then open the website again if needed.");
+}
+
 function updatePassButton(): void {
   const button = requiredElement<HTMLButtonElement>("#use-pass");
   const input = requiredElement<HTMLTextAreaElement>("#intention");
-  if (!context) {
+  if (!context || context.kind === "stale-rule") {
     button.disabled = true;
     return;
   }
@@ -85,7 +101,7 @@ function updatePassButton(): void {
 }
 
 async function usePass(): Promise<void> {
-  if (!context) {
+  if (!context || context.kind === "stale-rule") {
     return;
   }
   const button = requiredElement<HTMLButtonElement>("#use-pass");
