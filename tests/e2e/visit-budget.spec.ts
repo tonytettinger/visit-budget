@@ -138,6 +138,64 @@ test("guards already-open tabs and preserves page state", async () => {
   });
 });
 
+test("counts tab re-entry without counting refreshes or same-site tabs", async () => {
+  await withExtension(async ({ context, extensionId }) => {
+    const firstSiteTab = await context.newPage();
+    await firstSiteTab.goto(primaryUrl());
+    const secondSiteTab = await context.newPage();
+    await secondSiteTab.goto(primaryUrl());
+
+    const options = await context.newPage();
+    await addRule(options, extensionId, {
+      website: "127.0.0.1",
+      mode: "visit-limit",
+      limit: 2,
+    });
+
+    await firstSiteTab.bringToFront();
+    await expect(
+      firstSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveAttribute(
+      "aria-label",
+      "Visit 1 of 2 for 127.0.0.1. 1 visit remaining today.",
+    );
+
+    await firstSiteTab.reload();
+    await expect(
+      firstSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveCount(0);
+
+    await secondSiteTab.bringToFront();
+    await expect(
+      secondSiteTab.getByRole("heading", { name: "Test destination" }),
+    ).toBeVisible();
+    await expect(
+      secondSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveCount(0);
+
+    const away = await context.newPage();
+    await away.goto(awayUrl());
+    await firstSiteTab.bringToFront();
+    await expect(
+      firstSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveAttribute(
+      "aria-label",
+      "Visit 2 of 2 for 127.0.0.1. Next re-entry will be blocked.",
+    );
+
+    await away.bringToFront();
+    await waitForDynamicBlock(options, extensionId);
+    await secondSiteTab.bringToFront();
+    await expect(
+      secondSiteTab.locator("#visit-budget-guard-root"),
+    ).toBeAttached();
+    await expect(secondSiteTab.locator("body")).toHaveCSS(
+      "visibility",
+      "hidden",
+    );
+  });
+});
+
 test("shows one durable progress receipt for each consumed entry", async () => {
   await withExtension(async ({ context, extensionId }) => {
     const options = await context.newPage();
