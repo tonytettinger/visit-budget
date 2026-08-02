@@ -762,60 +762,24 @@ textarea {
   margin-top: 4px;
 }
 
-.about-maker {
+.about-card .maker-credit {
   flex: 0 0 auto;
-  text-align: right;
-}
-
-.maker-kicker,
-.maker-home {
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.about-card .maker-kicker,
-.about-card .maker-home {
+  font-size: 12px;
   margin-top: 0;
+  white-space: nowrap;
 }
 
 .maker-link {
-  background:
-    linear-gradient(var(--background), var(--background)) padding-box,
-    linear-gradient(135deg, #155de0, #6c3df4) border-box;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  color: var(--accent);
-  display: inline-flex;
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
-  font-size: 17px;
-  font-weight: 720;
-  gap: 4px;
-  letter-spacing: -0.025em;
-  line-height: 1;
-  margin: 5px 0;
-  padding: 9px 13px 10px;
-  text-decoration: none;
-  transition:
-    background 140ms ease,
-    box-shadow 140ms ease,
-    color 140ms ease,
-    transform 140ms ease;
-}
-
-.maker-link span {
-  color: #6c3df4;
-  font-style: italic;
+  color: var(--text);
+  font-weight: 650;
+  text-decoration-color: var(--border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .maker-link:hover {
-  background:
-    linear-gradient(#f8faff, #f8faff) padding-box,
-    linear-gradient(135deg, #155de0, #6c3df4) border-box;
-  box-shadow: 0 8px 24px rgba(21, 93, 224, 0.12);
-  color: #0f4fc4;
-  transform: translateY(-1px);
+  color: var(--accent);
+  text-decoration-color: currentColor;
 }
 
 .app-toast {
@@ -939,8 +903,8 @@ textarea {
     display: grid;
   }
 
-  .about-maker {
-    text-align: left;
+  .about-card .maker-credit {
+    white-space: normal;
   }
 }
 
