@@ -401,6 +401,37 @@ test("popup opens a durable prefilled setup flow", async () => {
   });
 });
 
+test("ignores vanished tabs without extension errors", async () => {
+  await withExtension(async ({ context, extensionId }) => {
+    const controller = await context.newPage();
+    await controller.goto(`chrome-extension://${extensionId}/options.html`);
+
+    const response = await controller.evaluate(async (): Promise<unknown> => {
+      const message: unknown = await chrome.runtime.sendMessage({
+        type: "GET_CURRENT_SITE",
+        tabId: 1_736_218_060,
+      });
+      return message;
+    });
+    expect(response).toMatchObject({
+      ok: true,
+      payload: {
+        status: { kind: "untracked" },
+        permissionGranted: false,
+      },
+    });
+
+    await controller.evaluate(async (url) => {
+      for (let index = 0; index < 12; index += 1) {
+        const tab = await chrome.tabs.create({ active: true, url });
+        if (tab.id !== undefined) {
+          await chrome.tabs.remove(tab.id).catch(() => undefined);
+        }
+      }
+    }, primaryUrl());
+  });
+});
+
 test("permanent blocks redirect before destination content is shown", async () => {
   await withExtension(async ({ context, extensionId }) => {
     const options = await context.newPage();

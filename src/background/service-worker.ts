@@ -76,7 +76,10 @@ chrome.tabs.onActivated.addListener(({ tabId, windowId }) => {
     if (!window.focused) {
       return;
     }
-    const tab = await chrome.tabs.get(tabId);
+    const tab = await getTabIfAvailable(tabId);
+    if (!tab) {
+      return;
+    }
     await processActiveUrl(
       tabId,
       windowId,
@@ -298,7 +301,10 @@ async function getPageContext(
 }
 
 async function processNavigation(tabId: number, url: string): Promise<void> {
-  const tab = await chrome.tabs.get(tabId);
+  const tab = await getTabIfAvailable(tabId);
+  if (!tab) {
+    return;
+  }
   if (!tab.active) {
     return;
   }
@@ -546,7 +552,7 @@ async function getCurrentSiteView(tabId?: number): Promise<CurrentSiteView> {
             lastFocusedWindow: true,
           })
         )[0]
-      : await chrome.tabs.get(tabId);
+      : await getTabIfAvailable(tabId);
   const url = tab?.url ?? tab?.pendingUrl;
   if (!url) {
     return {
@@ -576,6 +582,19 @@ async function getCurrentSiteView(tabId?: number): Promise<CurrentSiteView> {
     response.hostname = hostname;
   }
   return response;
+}
+
+async function getTabIfAvailable(
+  tabId: number,
+): Promise<chrome.tabs.Tab | undefined> {
+  try {
+    return await chrome.tabs.get(tabId);
+  } catch (error) {
+    if (isMissingTabError(error)) {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 async function getBlockedContext(ruleId: string): Promise<BlockedContext> {
@@ -756,4 +775,10 @@ function reportError(error: unknown): void {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unexpected extension error.";
+}
+
+function isMissingTabError(error: unknown): boolean {
+  return (
+    error instanceof Error && /^No tab with id: \d+\.$/.test(error.message)
+  );
 }
