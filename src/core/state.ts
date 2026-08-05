@@ -9,11 +9,38 @@ import type {
 
 export function createInitialState(now = new Date()): PersistedState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     localDate: localDateKey(now),
     rules: [],
     usageByRule: {},
     pendingChanges: [],
+  };
+}
+
+type StoredState = Omit<PersistedState, "schemaVersion"> & {
+  schemaVersion: 1 | 2;
+};
+
+export function migrateState(raw: unknown, now = new Date()): PersistedState {
+  if (
+    !raw ||
+    typeof raw !== "object" ||
+    !("schemaVersion" in raw) ||
+    (raw.schemaVersion !== 1 && raw.schemaVersion !== 2)
+  ) {
+    return createInitialState(now);
+  }
+
+  const stored = raw as StoredState;
+  return {
+    ...stored,
+    schemaVersion: 2,
+    rules: stored.rules.map(normalizeRule),
+    pendingChanges: stored.pendingChanges.map((change) =>
+      change.replacement
+        ? { ...change, replacement: normalizeRule(change.replacement) }
+        : change,
+    ),
   };
 }
 

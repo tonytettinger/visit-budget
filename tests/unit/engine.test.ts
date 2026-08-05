@@ -17,6 +17,7 @@ function limitedRule(): SiteRule {
     excludePathPrefixes: [],
     mode: "visit-limit",
     dailyLimit: 2,
+    countTabReturns: false,
     dailyLockEnabled: false,
   };
 }

@@ -17,6 +17,7 @@ function rule(overrides: Partial<SiteRule> = {}): SiteRule {
     excludePathPrefixes: [],
     mode: "visit-limit",
     dailyLimit: 3,
+    countTabReturns: false,
     dailyLockEnabled: false,
     ...overrides,
   };

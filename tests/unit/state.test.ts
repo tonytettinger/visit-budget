@@ -2,6 +2,7 @@ import {
   cancelPendingChange,
   createInitialState,
   deleteRule,
+  migrateState,
   refreshForCurrentDay,
   saveRule,
 } from "../../src/core/state";
@@ -19,6 +20,7 @@ function rule(overrides: Partial<SiteRule> = {}): SiteRule {
     excludePathPrefixes: [],
     mode: "visit-limit",
     dailyLimit: 3,
+    countTabReturns: false,
     dailyLockEnabled: false,
     ...overrides,
   };
@@ -31,16 +33,52 @@ describe("rule state", () => {
     expect(result.state.rules).toHaveLength(1);
   });
 
+  it("migrates existing rules to ordinary re-entry counting", () => {
+    const legacyRule = rule();
+    const legacyReplacement = rule({ dailyLimit: 5 });
+    delete (legacyRule as Partial<SiteRule>).countTabReturns;
+    delete (legacyReplacement as Partial<SiteRule>).countTabReturns;
+
+    const migrated = migrateState({
+      schemaVersion: 1,
+      localDate: "2026-07-05",
+      rules: [legacyRule],
+      usageByRule: {},
+      pendingChanges: [
+        {
+          ruleId: "rule-1",
+          effectiveDate: "2026-07-06",
+          kind: "replace",
+          replacement: legacyReplacement,
+        },
+      ],
+    });
+
+    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.rules[0]?.countTabReturns).toBe(false);
+    expect(migrated.pendingChanges[0]?.replacement?.countTabReturns).toBe(
+      false,
+    );
+  });
+
   it("queues edits and deletion for locked rules", () => {
     const initial = saveRule(
       createInitialState(today),
       rule({ dailyLockEnabled: true }),
       today,
     ).state;
-    const edited = saveRule(initial, rule({ dailyLimit: 9 }), today);
+    const edited = saveRule(
+      initial,
+      rule({ dailyLimit: 9, countTabReturns: true }),
+      today,
+    );
     expect(edited.scheduled).toBe(true);
     expect(edited.state.rules[0]?.dailyLimit).toBe(3);
     expect(edited.state.pendingChanges[0]?.replacement?.dailyLimit).toBe(9);
+    expect(edited.state.pendingChanges[0]?.replacement?.countTabReturns).toBe(
+      true,
+    );
+    expect(edited.state.rules[0]?.countTabReturns).toBe(false);
 
     const deleted = deleteRule(edited.state, "rule-1", today);
     expect(deleted.scheduled).toBe(true);

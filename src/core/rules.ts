@@ -1,5 +1,9 @@
 import type { SiteRule } from "./types";
 
+type RuleInput = Omit<SiteRule, "countTabReturns"> & {
+  countTabReturns?: boolean;
+};
+
 export interface ParsedRuleTarget {
   hostname: string;
   pathPrefix: string;
@@ -56,12 +60,13 @@ export function normalizePathPrefixes(paths: readonly string[]): string[] {
   );
 }
 
-export function normalizeRule(rule: SiteRule): SiteRule {
+export function normalizeRule(rule: RuleInput): SiteRule {
   const normalized: SiteRule = {
     ...rule,
     hostname: normalizeHostname(rule.hostname),
     includePathPrefixes: normalizePathPrefixes(rule.includePathPrefixes),
     excludePathPrefixes: normalizePathPrefixes(rule.excludePathPrefixes),
+    countTabReturns: rule.countTabReturns ?? false,
   };
 
   if (normalized.includePathPrefixes.length === 0) {
@@ -79,6 +84,7 @@ export function normalizeRule(rule: SiteRule): SiteRule {
     }
   } else {
     delete normalized.dailyLimit;
+    normalized.countTabReturns = false;
   }
 
   return normalized;

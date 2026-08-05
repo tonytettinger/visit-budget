@@ -6,13 +6,13 @@ Architecture impact: none; extends the existing core → platform → UI flow
 
 Stories covered: US-1, US-2, US-3, US-4, US-5
 
-Status: approved
+Status: in progress
 
 Delivery: direct commits to `main`
 
 ## Phase 1 — Optional tab-return counting
 
-Status: todo
+Status: done · 2026-08-05
 
 Checkpoint: yes — a rule can enable strict tab-return counting and Chrome
 demonstrates both counting modes
@@ -25,8 +25,10 @@ demonstrates both counting modes
   `src/platform/storage.ts`, `src/background/service-worker.ts`,
   `src/ui/options.ts`, `public/options.html`, `tests/unit/`,
   `tests/e2e/visit-budget.spec.ts`, `README.md`
-- Test: unit coverage for defaults/locked changes plus E2E coverage for strict
-  same-rule tab returns, ordinary mode, refresh, navigation, and focus return
+- Test: unit coverage for migration and locked changes; E2E coverage for strict
+  same-rule tab returns, ordinary mode, refresh, and navigation; browser-focus
+  return remains a manual Chrome check because headless Chromium cannot lose OS
+  focus
 - Commit: `feat: add optional tab-return counting`
 - Rollback: revert
 

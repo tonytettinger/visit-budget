@@ -8,6 +8,7 @@ export interface SiteRule {
   excludePathPrefixes: string[];
   mode: RuleMode;
   dailyLimit?: number;
+  countTabReturns: boolean;
   dailyLockEnabled: boolean;
 }
 
@@ -37,7 +38,7 @@ export interface EntryReceipt {
 }
 
 export interface PersistedState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   localDate: string;
   rules: SiteRule[];
   usageByRule: Record<string, DailyUsage>;

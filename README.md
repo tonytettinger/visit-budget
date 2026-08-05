@@ -19,6 +19,8 @@ to replace self-control.
   page into a page matched by a rule.
 - **Re-entry:** Returning to a matched rule after visiting a page that does not
   match that same effective rule. Even an immediate return counts.
+- **Tab-return counting:** An optional per-rule setting that also counts
+  returning to a matching tab after any other tab was active.
 - **Permanent block:** A rule that never allows entry and has no emergency
   pass.
 - **Emergency pass:** One site-specific, 10-minute exception per local calendar
@@ -32,7 +34,7 @@ to replace self-control.
 | ------------------------------------------------- | ----------------- |
 | Enter a limited site from an untracked site       | Yes               |
 | Switch away and immediately return                | Yes               |
-| Switch between tabs matched by the same rule      | No                |
+| Switch between tabs matched by the same rule      | Only when enabled |
 | Reload or navigate within the same effective rule | No                |
 | Move from an excluded path to an included path    | Yes               |
 | Return to the same tab after Chrome loses focus   | No                |
@@ -95,6 +97,7 @@ for unconfigured sites are neither retained nor analyzed.
 V1 includes:
 
 - Daily visit limits and permanent blocks.
+- Optional per-rule tab-return counting.
 - Domain, subdomain, included-path, and excluded-path matching.
 - Existing-tab protection.
 - One emergency pass per limited site per day.
@@ -122,7 +125,8 @@ V1 intentionally excludes:
 
 - Existing matching tabs cannot bypass a permanent block or exhausted limit.
 - New matching navigations are redirected before their destination is exposed.
-- Same-rule tabs, refreshes, and internal navigation do not double-count.
+- Same-rule tabs count only when tab-return counting is enabled; refreshes and
+  internal navigation never double-count.
 - Re-entry from another effective rule counts exactly once.
 - Concurrent browser events cannot consume multiple visits for one transition.
 - Every consumed visit produces exactly one receipt showing visits used,

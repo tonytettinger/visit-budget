@@ -335,7 +335,15 @@ async function processActiveUrl(
   const rule = findMatchingRule(url, state.rules);
   const session = await loadSession();
 
-  if (rule && rule.id === session.activeRuleId) {
+  const sameRule = rule?.id === session.activeRuleId;
+  const countsTabReturn =
+    sameRule &&
+    rule?.countTabReturns === true &&
+    session.browserFocused &&
+    session.activeTabId !== undefined &&
+    session.activeTabId !== tabId;
+
+  if (rule && sameRule && !countsTabReturn) {
     const nextSession: SessionState = {
       ...session,
       browserFocused: true,

@@ -11,7 +11,7 @@ import { requestRulePermissionWithContext } from "./permission-consent";
 
 let view: StateView = {
   state: {
-    schemaVersion: 1,
+    schemaVersion: 2,
     localDate: "",
     rules: [],
     usageByRule: {},
@@ -36,6 +36,7 @@ const includeSubdomains = requiredElement<HTMLInputElement>(
 );
 const includedPaths = requiredElement<HTMLTextAreaElement>("#included-paths");
 const excludedPaths = requiredElement<HTMLTextAreaElement>("#excluded-paths");
+const countTabReturns = requiredElement<HTMLInputElement>("#count-tab-returns");
 const dailyLock = requiredElement<HTMLInputElement>("#daily-lock");
 const formError = requiredElement<HTMLElement>("#form-error");
 const showAdvanced = requiredElement<HTMLButtonElement>("#show-advanced");
@@ -151,6 +152,7 @@ function renderEditor(): void {
   form.classList.remove("rule-form-quick-add");
   showAdvanced.hidden = true;
   includeSubdomains.checked = true;
+  countTabReturns.checked = false;
   dailyLimit.value = "3";
   includedPaths.value = "/";
   mode.value = "visit-limit";
@@ -172,6 +174,7 @@ function renderEditor(): void {
     includeSubdomains.checked = rule.includeSubdomains;
     includedPaths.value = rule.includePathPrefixes.join("\n");
     excludedPaths.value = rule.excludePathPrefixes.join("\n");
+    countTabReturns.checked = rule.countTabReturns;
     dailyLock.checked = rule.dailyLockEnabled;
   }
   updateModeVisibility();
@@ -203,6 +206,7 @@ async function submitRule(): Promise<void> {
       excludePathPrefixes: parsePaths(excludedPaths.value),
       mode:
         mode.value === "permanent-block" ? "permanent-block" : "visit-limit",
+      countTabReturns: mode.value === "visit-limit" && countTabReturns.checked,
       dailyLockEnabled: dailyLock.checked,
     };
     if (rule.mode === "visit-limit") {
@@ -372,8 +376,10 @@ function parsePaths(value: string, fallback?: string): string[] {
 
 function updateModeVisibility(): void {
   const limitField = requiredElement<HTMLElement>("#limit-field");
+  const tabReturnField = requiredElement<HTMLElement>("#tab-return-field");
   const isLimit = mode.value === "visit-limit";
   limitField.hidden = !isLimit;
+  tabReturnField.hidden = !isLimit;
   dailyLimit.required = isLimit;
 }
 

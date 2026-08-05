@@ -196,6 +196,81 @@ test("counts tab re-entry without counting refreshes or same-site tabs", async (
   });
 });
 
+test("optionally counts returns between tabs without counting page activity", async () => {
+  await withExtension(async ({ context, extensionId }) => {
+    const firstSiteTab = await context.newPage();
+    await firstSiteTab.goto(primaryUrl());
+    const secondSiteTab = await context.newPage();
+    await secondSiteTab.goto(primaryUrl());
+
+    const options = await context.newPage();
+    await addRule(options, extensionId, {
+      website: "127.0.0.1",
+      mode: "visit-limit",
+      limit: 3,
+      countTabReturns: true,
+    });
+    await expect(options.locator("#count-tab-returns")).toBeChecked();
+    if (process.env.CAPTURE_QA) {
+      await options.setViewportSize({ width: 1000, height: 760 });
+      await options.screenshot({
+        path: "/tmp/visit-budget-tab-return-setting.png",
+        fullPage: false,
+      });
+    }
+
+    await firstSiteTab.bringToFront();
+    await expect(
+      firstSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveAttribute(
+      "aria-label",
+      "Visit 1 of 3 for 127.0.0.1. 2 visits remaining today.",
+    );
+
+    await secondSiteTab.bringToFront();
+    await expect(
+      secondSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveAttribute(
+      "aria-label",
+      "Visit 2 of 3 for 127.0.0.1. 1 visit remaining today.",
+    );
+    if (process.env.CAPTURE_QA) {
+      await secondSiteTab.setViewportSize({ width: 1000, height: 700 });
+      await secondSiteTab.screenshot({
+        path: "/tmp/visit-budget-tab-return-receipt.png",
+        fullPage: false,
+      });
+    }
+
+    await secondSiteTab.reload();
+    await expect(
+      secondSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveCount(0);
+
+    await secondSiteTab.goto(`${primaryUrl()}?internal=1`);
+    await expect(
+      secondSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveCount(0);
+
+    await firstSiteTab.bringToFront();
+    await expect(
+      firstSiteTab.locator("#visit-budget-guard-root-toast"),
+    ).toHaveAttribute(
+      "aria-label",
+      "Visit 3 of 3 for 127.0.0.1. Next re-entry will be blocked.",
+    );
+
+    await secondSiteTab.bringToFront();
+    await expect(
+      secondSiteTab.locator("#visit-budget-guard-root"),
+    ).toBeAttached();
+    await expect(secondSiteTab.locator("body")).toHaveCSS(
+      "visibility",
+      "hidden",
+    );
+  });
+});
+
 test("shows one durable progress receipt for each consumed entry", async () => {
   await withExtension(async ({ context, extensionId }) => {
     const options = await context.newPage();
@@ -459,6 +534,7 @@ async function addRule(
     website: string;
     mode: "visit-limit" | "permanent-block";
     limit?: number;
+    countTabReturns?: boolean;
   },
 ): Promise<void> {
   await page.goto(`chrome-extension://${extensionId}/options.html`);
@@ -466,6 +542,9 @@ async function addRule(
   await page.locator("#mode").selectOption(input.mode);
   if (input.mode === "visit-limit") {
     await page.locator("#daily-limit").fill(String(input.limit ?? 1));
+    if (input.countTabReturns) {
+      await page.locator("#count-tab-returns").check();
+    }
   }
   await page.getByRole("button", { name: "Save rule" }).click();
   await expect(
