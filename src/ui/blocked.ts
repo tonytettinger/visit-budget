@@ -42,6 +42,7 @@ requiredElement<HTMLDialogElement>("#override-confirmation").addEventListener(
 );
 
 let context: BlockedContext | undefined;
+let previousPauseSeconds: number | undefined;
 void load();
 
 async function load(): Promise<void> {
@@ -112,6 +113,14 @@ function updateOverrideButton(): void {
     Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
   );
   button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
+  const pauseCountdown = requiredElement<HTMLElement>("#pause-countdown");
+  if (seconds !== previousPauseSeconds) {
+    pauseCountdown.textContent =
+      seconds > 0
+        ? `You can continue in ${seconds} seconds.`
+        : "The pause is complete. You can continue when ready.";
+    previousPauseSeconds = seconds;
+  }
   const intentionLength = input.value.trim().length;
   requiredElement<HTMLElement>("#intention-count").textContent =
     `${intentionLength} / ${MINIMUM_INTENTION_LENGTH}`;

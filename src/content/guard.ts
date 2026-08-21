@@ -2,12 +2,12 @@ import type { EntryReceipt, RuleStatus } from "../core/types";
 import type {
   BlockedContext,
   ClientRequest,
-  ClientResponse,
   GuardUpdate,
   OverrideConfirmationResult,
   OverrideSessionResult,
   PageContext,
 } from "../shared/messages";
+import { parseClientResponse } from "../shared/messages";
 
 declare global {
   interface Window {
@@ -176,6 +176,7 @@ function renderGate(
       button:disabled { cursor: not-allowed; opacity: 0.45; }
       button:focus-visible { box-shadow: 0 0 0 3px #cddfff; outline: none; }
       .pass-note, .error { color: #5f6673; font-size: 13px; line-height: 1.5; margin: 16px 0 0; }
+      .pause-countdown { color: #155de0; font-size: 13px; font-weight: 650; line-height: 1.5; margin: 8px 0 0; }
       .error { color: #9a2f20; min-height: 20px; }
       dialog { background: transparent; border: 0; max-width: 430px; padding: 0; width: calc(100% - 32px); }
       dialog::backdrop { background: rgba(23, 25, 31, 0.42); }
@@ -235,6 +236,7 @@ function renderOverrideForm(
 ): void {
   area.innerHTML = `
     <p class="pass-note">Need access anyway? Pause for 15 seconds, then describe what you intend to do in at least 50 characters. A confirmed override lasts 10 minutes.</p>
+    <p class="pause-countdown" role="status" aria-live="polite"></p>
     <label for="visit-budget-intention">What do you intend to do?</label>
     <textarea id="visit-budget-intention" maxlength="240" inputmode="text" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="For example: reply to one email, then leave"></textarea>
     <div class="intention-meta"><span>Your intention is not saved.</span><span class="intention-count">0 / 50</span></div>
@@ -259,6 +261,10 @@ function renderOverrideForm(
   const input = requiredElement<HTMLTextAreaElement>(shadow, "textarea");
   const button = requiredElement<HTMLButtonElement>(shadow, ".override");
   const error = requiredElement<HTMLElement>(shadow, ".gate-error");
+  const pauseCountdown = requiredElement<HTMLElement>(
+    shadow,
+    ".pause-countdown",
+  );
   const count = requiredElement<HTMLElement>(shadow, ".intention-count");
   const dialog = requiredElement<HTMLDialogElement>(shadow, "dialog");
   const codeOutput = requiredElement<HTMLElement>(shadow, ".confirmation-code");
@@ -274,6 +280,7 @@ function renderOverrideForm(
     shadow,
     ".confirm-override",
   );
+  let previousPauseSeconds: number | undefined;
 
   const update = (): void => {
     const seconds = Math.max(
@@ -281,6 +288,13 @@ function renderOverrideForm(
       Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
     );
     button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
+    if (seconds !== previousPauseSeconds) {
+      pauseCountdown.textContent =
+        seconds > 0
+          ? `You can continue in ${seconds} seconds.`
+          : "The pause is complete. You can continue when ready.";
+      previousPauseSeconds = seconds;
+    }
     const intentionLength = input.value.trim().length;
     count.textContent = `${intentionLength} / 50`;
     button.disabled = seconds > 0 || intentionLength < 50;
@@ -538,7 +552,9 @@ async function leaveForNow(shadow: ShadowRoot): Promise<void> {
 }
 
 async function sendRequest<T>(request: ClientRequest): Promise<T> {
-  const response: ClientResponse = await chrome.runtime.sendMessage(request);
+  const response = parseClientResponse(
+    await chrome.runtime.sendMessage(request),
+  );
   if (!response.ok) {
     throw new Error(response.error);
   }

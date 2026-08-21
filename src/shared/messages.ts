@@ -96,6 +96,32 @@ export type ClientPayload =
 export type ClientResponse =
   { ok: true; payload: ClientPayload } | { ok: false; error: string };
 
+export function parseClientResponse(value: unknown): ClientResponse {
+  if (!isRecord(value)) {
+    throw new Error(
+      "Visit Budget could not complete that action. Reload the extension and try again.",
+    );
+  }
+
+  if (value.ok === false && typeof value.error === "string") {
+    return value as ClientResponse;
+  }
+
+  if (value.ok === true && "payload" in value && value.payload !== undefined) {
+    return value as ClientResponse;
+  }
+
+  if (value.ok === true) {
+    throw new Error(
+      "Visit Budget did not return a confirmation. Reload the extension and try again.",
+    );
+  }
+
+  throw new Error(
+    "Visit Budget could not complete that action. Reload the extension and try again.",
+  );
+}
+
 export interface GuardUpdate {
   type: "GUARD_UPDATE";
   status: RuleStatus;

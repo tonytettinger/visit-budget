@@ -815,6 +815,13 @@ textarea {
   margin: 0 0 6px;
 }
 
+.pause-countdown {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
+  margin: 8px 0 12px;
+}
+
 .blocked-panel hr {
   border: 0;
   border-top: 1px solid var(--border);

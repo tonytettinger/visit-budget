@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### [fix] Clarify emergency-override pause and recovery — 2026-08-21
+
+- What: blocked pages and existing-tab overlays now show a standalone countdown
+  for the 15-second pause and replace missing confirmation responses with a
+  clear recovery message.
+- Why: the pause was only visible in a button label, and a stale or mismatched
+  extension context could expose an opaque `undefined` error instead of helping
+  the user recover.
+- How: `src/shared/messages.ts` validates runtime message responses;
+  `src/ui/blocked.ts` and `src/content/guard.ts` render the countdown; the
+  service worker awaits override results explicitly.
+- UX: users can see exactly when they may continue, and a failed hand-off tells
+  them to reload the extension rather than showing an implementation error.
+- Practices:
+  - One response parser at the extension message boundary keeps malformed
+    Chrome responses from leaking into either UI surface.
+  - `tests/e2e/visit-budget.spec.ts` asserts the visible countdown in the real
+    override journey while preserving the existing confirmation checks.
+
 ## v1.0.0 — 2026-08-21
 
 ### [feature] Add deliberate friction controls — 2026-08-21

@@ -84,6 +84,9 @@ test("limits re-entry and grants a private override session", async () => {
       }),
     ).toBeVisible();
 
+    await expect(page.locator("#pause-countdown")).toHaveText(
+      /You can continue in \d+ seconds\.|The pause is complete\./,
+    );
     await makeEmergencyPauseReady(page);
     await page.reload();
     const intention = page.getByLabel("What do you intend to do?");

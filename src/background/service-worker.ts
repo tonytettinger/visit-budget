@@ -271,12 +271,16 @@ async function handleRequest(
       return { cancelled: true };
     }
     case "START_OVERRIDE_CONFIRMATION":
-      return startOverrideConfirmation(request.ruleId, request.intention);
+      return await startOverrideConfirmation(request.ruleId, request.intention);
     case "CANCEL_OVERRIDE_CONFIRMATION":
       await cancelOverrideConfirmation(request.ruleId);
       return { cancelled: true };
     case "CONFIRM_OVERRIDE":
-      return confirmOverride(request.ruleId, request.intention, request.code);
+      return await confirmOverride(
+        request.ruleId,
+        request.intention,
+        request.code,
+      );
   }
 }
 

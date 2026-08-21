@@ -1,13 +1,12 @@
-import type {
-  ClientPayload,
-  ClientRequest,
-  ClientResponse,
-} from "../shared/messages";
+import type { ClientPayload, ClientRequest } from "../shared/messages";
+import { parseClientResponse } from "../shared/messages";
 
 export async function sendRequest<T extends ClientPayload>(
   request: ClientRequest,
 ): Promise<T> {
-  const response: ClientResponse = await chrome.runtime.sendMessage(request);
+  const response = parseClientResponse(
+    await chrome.runtime.sendMessage(request),
+  );
   if (!response.ok) {
     throw new Error(response.error);
   }
