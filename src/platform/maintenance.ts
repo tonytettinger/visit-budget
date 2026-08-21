@@ -7,11 +7,11 @@ export async function scheduleMaintenance(
   state: PersistedState,
   now = new Date(),
 ): Promise<void> {
-  const passExpirations = Object.values(state.usageByRule)
-    .map((usage) => usage.emergencyPassExpiresAt)
+  const overrideExpirations = Object.values(state.usageByRule)
+    .map((usage) => usage.overrideSessionExpiresAt)
     .filter(
       (value): value is number => value !== undefined && value > now.getTime(),
     );
-  const when = Math.min(nextLocalMidnight(now), ...passExpirations);
+  const when = Math.min(nextLocalMidnight(now), ...overrideExpirations);
   await chrome.alarms.create(MAINTENANCE_ALARM, { when });
 }

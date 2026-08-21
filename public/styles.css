@@ -822,17 +822,17 @@ textarea {
 }
 
 .blocked-actions,
-#pass-section {
+#override-section {
   display: grid;
   gap: 10px;
 }
 
 .blocked-actions .button,
-#pass-section > .button {
+#override-section > .button {
   width: 100%;
 }
 
-#pass-section {
+#override-section {
   border-top: 1px solid var(--border);
   margin-top: 18px;
   padding-top: 18px;

@@ -16,8 +16,7 @@ export interface DailyUsage {
   ruleId: string;
   localDate: string;
   visitsUsed: number;
-  emergencyPassUsed: boolean;
-  emergencyPassExpiresAt?: number;
+  overrideSessionExpiresAt?: number;
 }
 
 export interface PendingRuleChange {
@@ -38,7 +37,7 @@ export interface EntryReceipt {
 }
 
 export interface PersistedState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   localDate: string;
   rules: SiteRule[];
   usageByRule: Record<string, DailyUsage>;
@@ -51,9 +50,9 @@ export interface SessionState {
   activeTabId?: number;
   activeRuleId?: string;
   activeUrl?: string;
-  activeAccess?: "allowed" | "emergency-access" | "blocked";
+  activeAccess?: "allowed" | "override-session" | "blocked";
   activeRemaining?: number;
-  emergencyChallengeByRule?: Record<string, number>;
+  overrideChallengeByRule?: Record<string, number>;
   entryReceiptByTab?: Record<string, EntryReceipt>;
 }
 
@@ -65,7 +64,7 @@ export type EntryDecision =
       usage: DailyUsage;
     }
   | {
-      kind: "emergency-access";
+      kind: "override-session";
       ruleId: string;
       expiresAt: number;
       usage: DailyUsage;
@@ -74,7 +73,6 @@ export type EntryDecision =
       kind: "limit-reached";
       ruleId: string;
       usage: DailyUsage;
-      emergencyPassAvailable: boolean;
     }
   | {
       kind: "permanently-blocked";
@@ -92,7 +90,7 @@ export type RuleStatus =
       remaining: number;
     }
   | {
-      kind: "emergency-access";
+      kind: "override-session";
       rule: SiteRule;
       usage: DailyUsage;
       expiresAt: number;
@@ -101,7 +99,6 @@ export type RuleStatus =
       kind: "limit-reached";
       rule: SiteRule;
       usage: DailyUsage;
-      emergencyPassAvailable: boolean;
     }
   | {
       kind: "permanently-blocked";

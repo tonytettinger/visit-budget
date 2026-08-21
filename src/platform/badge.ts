@@ -16,11 +16,11 @@ export async function updateBadge(status: RuleStatus): Promise<void> {
         title: `${status.rule.hostname}: ${status.remaining} visits remaining`,
       });
       return;
-    case "emergency-access":
+    case "override-session":
       await chrome.action.setBadgeBackgroundColor({ color: WARNING });
       await chrome.action.setBadgeText({ text: "10m" });
       await chrome.action.setTitle({
-        title: `${status.rule.hostname}: emergency access active`,
+        title: `${status.rule.hostname}: override session active`,
       });
       return;
     case "limit-reached":

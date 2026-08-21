@@ -54,11 +54,37 @@ describe("rule state", () => {
       ],
     });
 
-    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.schemaVersion).toBe(3);
     expect(migrated.rules[0]?.countTabReturns).toBe(false);
     expect(migrated.pendingChanges[0]?.replacement?.countTabReturns).toBe(
       false,
     );
+  });
+
+  it("migrates an active legacy emergency pass into an override session", () => {
+    const expiresAt = today.getTime() + 60_000;
+    const migrated = migrateState({
+      schemaVersion: 2,
+      localDate: "2026-07-05",
+      rules: [rule()],
+      usageByRule: {
+        "rule-1": {
+          ruleId: "rule-1",
+          localDate: "2026-07-05",
+          visitsUsed: 3,
+          emergencyPassUsed: true,
+          emergencyPassExpiresAt: expiresAt,
+        },
+      },
+      pendingChanges: [],
+    });
+
+    expect(migrated.usageByRule["rule-1"]).toEqual({
+      ruleId: "rule-1",
+      localDate: "2026-07-05",
+      visitsUsed: 3,
+      overrideSessionExpiresAt: expiresAt,
+    });
   });
 
   it("queues edits and deletion for locked rules", () => {
@@ -97,7 +123,6 @@ describe("rule state", () => {
       ruleId: "rule-1",
       localDate: "2026-07-05",
       visitsUsed: 3,
-      emergencyPassUsed: false,
     };
 
     const refreshed = refreshForCurrentDay(edited, tomorrow);

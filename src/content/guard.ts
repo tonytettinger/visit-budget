@@ -3,8 +3,8 @@ import type {
   BlockedContext,
   ClientRequest,
   ClientResponse,
-  EmergencyPassResult,
   GuardUpdate,
+  OverrideSessionResult,
   PageContext,
 } from "../shared/messages";
 
@@ -56,7 +56,7 @@ async function applyStatus(
         showEntryReceiptToast(entryReceipt);
       }
       return;
-    case "emergency-access":
+    case "override-session":
       removeGate();
       removeCurtain();
       return;
@@ -107,9 +107,7 @@ function renderGate(
   host.id = ROOT_ID;
   const shadow = host.attachShadow({ mode: "closed" });
   const isPermanent = context.status.kind === "permanently-blocked";
-  const passAvailable =
-    context.status.kind === "limit-reached" &&
-    context.status.emergencyPassAvailable;
+  const overrideAvailable = context.status.kind === "limit-reached";
 
   shadow.innerHTML = `
     <style>
@@ -181,7 +179,7 @@ function renderGate(
         <div class="actions">
           <button class="primary leave" type="button">Leave for now</button>
         </div>
-        <div class="pass-area"></div>
+        <div class="override-area"></div>
         <p class="error" role="alert"></p>
       </section>
     </main>
@@ -200,35 +198,30 @@ function renderGate(
     () => void leaveForNow(shadow),
   );
 
-  const passArea = requiredElement<HTMLElement>(shadow, ".pass-area");
-  if (!isPermanent && passAvailable) {
-    renderPassForm(shadow, passArea, context);
-  } else if (!isPermanent) {
-    const note = document.createElement("p");
-    note.className = "pass-note";
-    note.textContent = "Today's emergency pass has already been used.";
-    passArea.append(note);
+  const overrideArea = requiredElement<HTMLElement>(shadow, ".override-area");
+  if (!isPermanent && overrideAvailable) {
+    renderOverrideForm(shadow, overrideArea, context);
   }
 
   document.documentElement.append(host);
   requiredElement<HTMLButtonElement>(shadow, ".leave").focus();
 }
 
-function renderPassForm(
+function renderOverrideForm(
   shadow: ShadowRoot,
   area: HTMLElement,
   context: Extract<BlockedContext, { kind: "active-block" }>,
 ): void {
   area.innerHTML = `
-    <p class="pass-note">One 10-minute pass remains. It starts after a 15-second pause.</p>
+    <p class="pass-note">A 10-minute emergency override is available. Pause for 15 seconds, then describe what you intend to do in at least 50 characters.</p>
     <label for="visit-budget-intention">What do you intend to do?</label>
     <textarea id="visit-budget-intention" maxlength="240" inputmode="text" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="For example: check one email, then leave"></textarea>
     <div class="actions" style="margin-top: 10px">
-      <button class="secondary pass" type="button" disabled></button>
+      <button class="secondary override" type="button" disabled></button>
     </div>
   `;
   const input = requiredElement<HTMLTextAreaElement>(shadow, "textarea");
-  const button = requiredElement<HTMLButtonElement>(shadow, ".pass");
+  const button = requiredElement<HTMLButtonElement>(shadow, ".override");
   const error = requiredElement<HTMLElement>(shadow, ".error");
 
   const update = (): void => {
@@ -236,9 +229,8 @@ function renderPassForm(
       0,
       Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
     );
-    button.textContent =
-      seconds > 0 ? `Use emergency pass (${seconds}s)` : "Use emergency pass";
-    button.disabled = seconds > 0 || input.value.trim().length === 0;
+    button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
+    button.disabled = seconds > 0 || input.value.trim().length < 50;
     if (seconds === 0) {
       clearInterval(timer);
     }
@@ -249,8 +241,8 @@ function renderPassForm(
   button.addEventListener("click", () => {
     button.disabled = true;
     error.textContent = "";
-    void sendRequest<EmergencyPassResult>({
-      type: "START_EMERGENCY_PASS",
+    void sendRequest<OverrideSessionResult>({
+      type: "START_OVERRIDE_SESSION",
       ruleId: context.rule.id,
       intention: input.value,
     })
@@ -258,7 +250,7 @@ function renderPassForm(
         clearInterval(timer);
         removeGate();
         removeCurtain();
-        showEmergencyToast(context.rule.hostname);
+        showOverrideToast(context.rule.hostname);
       })
       .catch((caught: unknown) => {
         error.textContent = errorMessage(caught);
@@ -285,11 +277,11 @@ function showEntryReceiptToast(receipt: EntryReceipt): void {
   });
 }
 
-function showEmergencyToast(hostname: string): void {
+function showOverrideToast(hostname: string): void {
   showToast({
-    ariaLabel: `${hostname}: emergency access is active for 10 minutes.`,
-    detail: "Emergency access is active for 10 minutes",
-    headline: "Emergency access",
+    ariaLabel: `${hostname}: an override session is active for 10 minutes.`,
+    detail: "Override access is active for 10 minutes",
+    headline: "Override active",
     hostname,
     progress: 100,
     ringLabel: "10m",

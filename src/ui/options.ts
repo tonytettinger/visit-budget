@@ -11,7 +11,7 @@ import { requestRulePermissionWithContext } from "./permission-consent";
 
 let view: StateView = {
   state: {
-    schemaVersion: 2,
+    schemaVersion: 3,
     localDate: "",
     rules: [],
     usageByRule: {},
@@ -338,8 +338,8 @@ function statusLabel(rule: SiteRule): string {
       return `${status.remaining} ${
         status.remaining === 1 ? "visit" : "visits"
       } left today`;
-    case "emergency-access":
-      return "Emergency access active";
+    case "override-session":
+      return "Override session active";
     case "limit-reached":
       return "Budget used for today";
     case "permanently-blocked":

@@ -2,7 +2,7 @@ import { formatResetTime } from "../core/date";
 import {
   evaluateEntry,
   getRuleStatus,
-  startEmergencyPass,
+  startOverrideSession,
 } from "../core/engine";
 import { findMatchingRule } from "../core/rules";
 import { cancelPendingChange, deleteRule, saveRule } from "../core/state";
@@ -48,7 +48,7 @@ import type {
 } from "../shared/messages";
 import { isClientRequest } from "../shared/messages";
 
-const EMERGENCY_CHALLENGE_MS = 15_000;
+const OVERRIDE_PAUSE_MS = 15_000;
 let blockingFingerprint = "";
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -145,7 +145,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   void runExclusive(async () => {
     const state = await loadState();
     let session = await loadSession();
-    if (session.activeAccess === "emergency-access") {
+    if (session.activeAccess === "override-session") {
       const activeRule = state.rules.find(
         (rule) => rule.id === session.activeRuleId,
       );
@@ -155,7 +155,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
           state.usageByRule[activeRule.id],
           new Date(),
         );
-        if (status.kind !== "emergency-access") {
+        if (status.kind !== "override-session") {
           session = {
             ...session,
             activeAccess: "blocked",
@@ -264,8 +264,8 @@ async function handleRequest(
       await saveState(state);
       return { cancelled: true };
     }
-    case "START_EMERGENCY_PASS":
-      return activateEmergencyPass(request.ruleId, request.intention);
+    case "START_OVERRIDE_SESSION":
+      return activateOverrideSession(request.ruleId, request.intention);
   }
 }
 
@@ -445,8 +445,8 @@ function sessionFromDecision(
     activeAccess:
       decision.kind === "allow"
         ? "allowed"
-        : decision.kind === "emergency-access"
-          ? "emergency-access"
+        : decision.kind === "override-session"
+          ? "override-session"
           : "blocked",
   };
   if (decision.kind === "allow") {
@@ -606,12 +606,12 @@ async function getBlockedContext(ruleId: string): Promise<BlockedContext> {
     return { kind: "stale-rule" };
   }
 
-  const challenges = { ...(session.emergencyChallengeByRule ?? {}) };
+  const challenges = { ...(session.overrideChallengeByRule ?? {}) };
   const issuedAt = challenges[ruleId] ?? Date.now();
   challenges[ruleId] = issuedAt;
   await saveSession({
     ...session,
-    emergencyChallengeByRule: challenges,
+    overrideChallengeByRule: challenges,
   });
   const status = getRuleStatus(rule, state.usageByRule[rule.id], new Date());
   if (status.kind === "untracked") {
@@ -622,12 +622,12 @@ async function getBlockedContext(ruleId: string): Promise<BlockedContext> {
     kind: "active-block",
     rule,
     status,
-    challengeReadyAt: issuedAt + EMERGENCY_CHALLENGE_MS,
+    challengeReadyAt: issuedAt + OVERRIDE_PAUSE_MS,
     resetLabel: formatResetTime(new Date()),
   };
 }
 
-async function activateEmergencyPass(
+async function activateOverrideSession(
   ruleId: string,
   intention: string,
 ): Promise<{ expiresAt: number }> {
@@ -635,15 +635,12 @@ async function activateEmergencyPass(
   const state = await loadState(now);
   const rule = requireRule(state, ruleId);
   const session = await loadSession();
-  const issuedAt = session.emergencyChallengeByRule?.[ruleId];
-  if (
-    issuedAt === undefined ||
-    issuedAt + EMERGENCY_CHALLENGE_MS > now.getTime()
-  ) {
+  const issuedAt = session.overrideChallengeByRule?.[ruleId];
+  if (issuedAt === undefined || issuedAt + OVERRIDE_PAUSE_MS > now.getTime()) {
     throw new Error("The 15-second pause is still in progress.");
   }
 
-  const usage = startEmergencyPass(
+  const usage = startOverrideSession(
     rule,
     state.usageByRule[rule.id],
     intention,
@@ -654,19 +651,19 @@ async function activateEmergencyPass(
 
   const nextSession = { ...session };
   if (nextSession.activeRuleId === ruleId) {
-    nextSession.activeAccess = "emergency-access";
+    nextSession.activeAccess = "override-session";
   }
   const challenges = Object.fromEntries(
-    Object.entries(nextSession.emergencyChallengeByRule ?? {}).filter(
+    Object.entries(nextSession.overrideChallengeByRule ?? {}).filter(
       ([id]) => id !== ruleId,
     ),
   );
-  nextSession.emergencyChallengeByRule = challenges;
+  nextSession.overrideChallengeByRule = challenges;
   await saveSession(nextSession);
 
   await reconcileAll(state, nextSession, false);
   await refreshAllAccessibleGuards(state, nextSession);
-  return { expiresAt: usage.emergencyPassExpiresAt ?? now.getTime() };
+  return { expiresAt: usage.overrideSessionExpiresAt ?? now.getTime() };
 }
 
 async function reconcileAll(
@@ -744,14 +741,14 @@ async function notifyGuard(
   };
   const challengeIssuedAt =
     status.kind === "limit-reached" || status.kind === "permanently-blocked"
-      ? session.emergencyChallengeByRule?.[status.rule.id]
+      ? session.overrideChallengeByRule?.[status.rule.id]
       : undefined;
   if (
     (status.kind === "limit-reached" ||
       status.kind === "permanently-blocked") &&
     challengeIssuedAt !== undefined
   ) {
-    update.challengeReadyAt = challengeIssuedAt + EMERGENCY_CHALLENGE_MS;
+    update.challengeReadyAt = challengeIssuedAt + OVERRIDE_PAUSE_MS;
   }
   try {
     await chrome.tabs.sendMessage(tabId, update);

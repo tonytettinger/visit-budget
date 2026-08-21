@@ -1,8 +1,9 @@
 import {
-  EMERGENCY_PASS_DURATION_MS,
+  MINIMUM_INTENTION_LENGTH,
+  OVERRIDE_SESSION_DURATION_MS,
   evaluateEntry,
   getRuleStatus,
-  startEmergencyPass,
+  startOverrideSession,
 } from "../../src/core/engine";
 import type { DailyUsage, SiteRule } from "../../src/core/types";
 
@@ -27,7 +28,6 @@ function usage(overrides: Partial<DailyUsage> = {}): DailyUsage {
     ruleId: "limited",
     localDate: "2026-07-05",
     visitsUsed: 0,
-    emergencyPassUsed: false,
     ...overrides,
   };
 }
@@ -77,44 +77,61 @@ describe("visit decisions", () => {
   });
 });
 
-describe("emergency passes", () => {
-  it("requires an intention and an exhausted budget", () => {
+describe("emergency overrides", () => {
+  const intention = "Check one important email, reply if needed, then leave.";
+
+  it("requires a 50-character intention and an exhausted budget", () => {
     expect(() =>
-      startEmergencyPass(limitedRule(), usage({ visitsUsed: 2 }), " ", now),
-    ).toThrow("Write a short intention");
+      startOverrideSession(
+        limitedRule(),
+        usage({ visitsUsed: 2 }),
+        "a".repeat(MINIMUM_INTENTION_LENGTH - 1),
+        now,
+      ),
+    ).toThrow("at least 50 characters");
     expect(() =>
-      startEmergencyPass(limitedRule(), usage({ visitsUsed: 1 }), "Reply", now),
+      startOverrideSession(
+        limitedRule(),
+        usage({ visitsUsed: 1 }),
+        intention,
+        now,
+      ),
     ).toThrow("not exhausted");
   });
 
-  it("grants one ten-minute pass and reports active access", () => {
-    const granted = startEmergencyPass(
+  it("grants a ten-minute override session and reports active access", () => {
+    const granted = startOverrideSession(
       limitedRule(),
       usage({ visitsUsed: 2 }),
-      "Read one saved article",
+      intention,
       now,
     );
-    expect(granted.emergencyPassExpiresAt).toBe(
-      now.getTime() + EMERGENCY_PASS_DURATION_MS,
+    expect(granted.overrideSessionExpiresAt).toBe(
+      now.getTime() + OVERRIDE_SESSION_DURATION_MS,
     );
     expect(getRuleStatus(limitedRule(), granted, now).kind).toBe(
-      "emergency-access",
+      "override-session",
     );
     expect(evaluateEntry(limitedRule(), granted, now).kind).toBe(
-      "emergency-access",
+      "override-session",
     );
   });
 
-  it("does not restore a used pass after it expires", () => {
+  it("allows another full override after the previous session expires", () => {
     const expired = usage({
       visitsUsed: 2,
-      emergencyPassUsed: true,
-      emergencyPassExpiresAt: now.getTime() - 1,
+      overrideSessionExpiresAt: now.getTime() - 1,
     });
     const status = getRuleStatus(limitedRule(), expired, now);
     expect(status.kind).toBe("limit-reached");
-    if (status.kind === "limit-reached") {
-      expect(status.emergencyPassAvailable).toBe(false);
-    }
+    const repeated = startOverrideSession(
+      limitedRule(),
+      expired,
+      intention,
+      now,
+    );
+    expect(repeated.overrideSessionExpiresAt).toBe(
+      now.getTime() + OVERRIDE_SESSION_DURATION_MS,
+    );
   });
 });

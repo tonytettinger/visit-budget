@@ -1,4 +1,5 @@
-import type { BlockedContext, EmergencyPassResult } from "../shared/messages";
+import { MINIMUM_INTENTION_LENGTH } from "../core/engine";
+import type { BlockedContext, OverrideSessionResult } from "../shared/messages";
 import { errorMessage, requiredElement, sendRequest } from "./client";
 
 const params = new URLSearchParams(location.search);
@@ -14,9 +15,9 @@ requiredElement<HTMLTextAreaElement>("#intention").addEventListener(
   "input",
   updatePassButton,
 );
-requiredElement<HTMLButtonElement>("#use-pass").addEventListener(
+requiredElement<HTMLButtonElement>("#continue-override").addEventListener(
   "click",
-  () => void usePass(),
+  () => void startOverride(),
 );
 
 let context: BlockedContext | undefined;
@@ -36,7 +37,7 @@ async function load(): Promise<void> {
       renderStaleRule();
       return;
     }
-    if (context.status.kind === "emergency-access" && originalTarget) {
+    if (context.status.kind === "override-session" && originalTarget) {
       location.replace(originalTarget);
       return;
     }
@@ -58,12 +59,10 @@ function render(
   requiredElement<HTMLElement>("#blocked-reset").textContent =
     `Resets at ${value.resetLabel}`;
 
-  const passSection = requiredElement<HTMLElement>("#pass-section");
-  const canUsePass =
-    value.status.kind === "limit-reached" &&
-    value.status.emergencyPassAvailable;
-  passSection.hidden = !canUsePass;
-  if (canUsePass) {
+  const overrideSection = requiredElement<HTMLElement>("#override-section");
+  const canOverride = value.status.kind === "limit-reached";
+  overrideSection.hidden = !canOverride;
+  if (canOverride) {
     countdownTimer = window.setInterval(updatePassButton, 250);
     updatePassButton();
     requiredElement<HTMLTextAreaElement>("#intention").focus();
@@ -76,12 +75,12 @@ function renderStaleRule(): void {
   requiredElement<HTMLElement>("#blocked-site").textContent =
     "The rule was changed or removed.";
   requiredElement<HTMLElement>("#blocked-reset").textContent = "";
-  requiredElement<HTMLElement>("#pass-section").hidden = true;
+  requiredElement<HTMLElement>("#override-section").hidden = true;
   renderError("Use Leave for now, then open the website again if needed.");
 }
 
 function updatePassButton(): void {
-  const button = requiredElement<HTMLButtonElement>("#use-pass");
+  const button = requiredElement<HTMLButtonElement>("#continue-override");
   const input = requiredElement<HTMLTextAreaElement>("#intention");
   if (!context || context.kind === "stale-rule") {
     button.disabled = true;
@@ -91,26 +90,26 @@ function updatePassButton(): void {
     0,
     Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
   );
-  button.textContent =
-    seconds > 0 ? `Use emergency pass (${seconds}s)` : "Use emergency pass";
-  button.disabled = seconds > 0 || input.value.trim().length === 0;
+  button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
+  button.disabled =
+    seconds > 0 || input.value.trim().length < MINIMUM_INTENTION_LENGTH;
   if (seconds === 0 && countdownTimer !== undefined) {
     window.clearInterval(countdownTimer);
     countdownTimer = undefined;
   }
 }
 
-async function usePass(): Promise<void> {
+async function startOverride(): Promise<void> {
   if (!context || context.kind === "stale-rule") {
     return;
   }
-  const button = requiredElement<HTMLButtonElement>("#use-pass");
+  const button = requiredElement<HTMLButtonElement>("#continue-override");
   const input = requiredElement<HTMLTextAreaElement>("#intention");
   button.disabled = true;
   renderError("");
   try {
-    await sendRequest<EmergencyPassResult>({
-      type: "START_EMERGENCY_PASS",
+    await sendRequest<OverrideSessionResult>({
+      type: "START_OVERRIDE_SESSION",
       ruleId: context.rule.id,
       intention: input.value,
     });

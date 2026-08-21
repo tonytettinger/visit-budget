@@ -45,7 +45,7 @@ function shouldBlock(
   if (
     session.activeRuleId === rule.id &&
     (session.activeAccess === "allowed" ||
-      session.activeAccess === "emergency-access")
+      session.activeAccess === "override-session")
   ) {
     return false;
   }

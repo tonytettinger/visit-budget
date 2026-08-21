@@ -42,7 +42,7 @@ test.afterAll(async () => {
   });
 });
 
-test("limits re-entry and grants one emergency pass", async () => {
+test("limits re-entry and grants a private override session", async () => {
   await withExtension(async ({ context, extensionId }) => {
     const options = await context.newPage();
     await addRule(options, extensionId, {
@@ -89,14 +89,24 @@ test("limits re-entry and grants one emergency pass", async () => {
     const intention = page.getByLabel("What do you intend to do?");
     await expect(intention).toBeFocused();
     await expect(intention).toHaveAttribute("inputmode", "text");
-    await intention.pressSequentially("Check my email, then leave");
-    await expect(intention).toHaveValue("Check my email, then leave");
-    await page.getByRole("button", { name: "Use emergency pass" }).click();
+    const intentionText =
+      "Check the one account email I am expecting, reply if needed, then leave.";
+    await intention.pressSequentially(intentionText);
+    await expect(intention).toHaveValue(intentionText);
+    await page.getByRole("button", { name: "Continue" }).click();
 
     await expect(page).toHaveURL(primaryUrl());
     await expect(
       page.getByRole("heading", { name: "Test destination" }),
     ).toBeVisible();
+
+    const storedState = await options.evaluate(async () => {
+      return {
+        local: await chrome.storage.local.get(null),
+        session: await chrome.storage.session.get(null),
+      };
+    });
+    expect(JSON.stringify(storedState)).not.toContain(intentionText);
   });
 });
 
@@ -616,14 +626,14 @@ async function makeEmergencyPauseReady(page: Page): Promise<void> {
     const key = "visitBudgetSession";
     const stored = await chrome.storage.session.get(key);
     const session = (stored[key] ?? {}) as {
-      emergencyChallengeByRule?: Record<string, number>;
+      overrideChallengeByRule?: Record<string, number>;
     };
-    const challenges = session.emergencyChallengeByRule ?? {};
+    const challenges = session.overrideChallengeByRule ?? {};
     for (const ruleId of Object.keys(challenges)) {
       challenges[ruleId] = Date.now() - 20_000;
     }
     await chrome.storage.session.set({
-      [key]: { ...session, emergencyChallengeByRule: challenges },
+      [key]: { ...session, overrideChallengeByRule: challenges },
     });
   });
 }

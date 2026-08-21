@@ -70,8 +70,8 @@ function statusSummary(status: Exclude<RuleStatus, { kind: "untracked" }>) {
         `${status.usage.visitsUsed} of ${limit} visits used today`,
       );
     }
-    case "emergency-access":
-      return summary("Emergency access is active for this site.");
+    case "override-session":
+      return summary("A 10-minute override is active for this site.");
     case "limit-reached":
       return summary("Today's visit budget is used.");
     case "permanently-blocked":
@@ -107,14 +107,12 @@ function remaining(
         status.remaining === 1 ? "visit" : "visits"
       } remaining`;
       break;
-    case "emergency-access":
-      element.textContent = "10-minute emergency session";
+    case "override-session":
+      element.textContent = "10-minute override session";
       element.classList.add("warning");
       break;
     case "limit-reached":
-      element.textContent = status.emergencyPassAvailable
-        ? "Emergency pass available"
-        : "Blocked until tomorrow";
+      element.textContent = "Emergency override available";
       element.classList.add("warning");
       break;
     case "permanently-blocked":

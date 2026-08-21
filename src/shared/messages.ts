@@ -17,7 +17,7 @@ export type ClientRequest =
   | { type: "CANCEL_PENDING_CHANGE"; ruleId: string }
   | { type: "OPEN_FRESH_TAB" }
   | {
-      type: "START_EMERGENCY_PASS";
+      type: "START_OVERRIDE_SESSION";
       ruleId: string;
       intention: string;
     };
@@ -62,7 +62,7 @@ export interface DeleteRuleResult {
   state: PersistedState;
 }
 
-export interface EmergencyPassResult {
+export interface OverrideSessionResult {
   expiresAt: number;
 }
 
@@ -70,7 +70,7 @@ export type ClientPayload =
   | BlockedContext
   | CurrentSiteView
   | DeleteRuleResult
-  | EmergencyPassResult
+  | OverrideSessionResult
   | EntryDecision
   | SaveRuleResult
   | StateView

@@ -1,6 +1,7 @@
 import { localDateKey, nextLocalDateKey } from "./date";
 import { findIndistinguishableRule, normalizeRule } from "./rules";
 import type {
+  DailyUsage,
   PendingRuleChange,
   PersistedState,
   RuleMutationResult,
@@ -9,7 +10,7 @@ import type {
 
 export function createInitialState(now = new Date()): PersistedState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     localDate: localDateKey(now),
     rules: [],
     usageByRule: {},
@@ -17,8 +18,14 @@ export function createInitialState(now = new Date()): PersistedState {
   };
 }
 
-type StoredState = Omit<PersistedState, "schemaVersion"> & {
-  schemaVersion: 1 | 2;
+interface LegacyDailyUsage extends DailyUsage {
+  emergencyPassExpiresAt?: number;
+  emergencyPassUsed?: boolean;
+}
+
+type StoredState = Omit<PersistedState, "schemaVersion" | "usageByRule"> & {
+  schemaVersion: 1 | 2 | 3;
+  usageByRule: Record<string, DailyUsage | LegacyDailyUsage>;
 };
 
 export function migrateState(raw: unknown, now = new Date()): PersistedState {
@@ -26,7 +33,9 @@ export function migrateState(raw: unknown, now = new Date()): PersistedState {
     !raw ||
     typeof raw !== "object" ||
     !("schemaVersion" in raw) ||
-    (raw.schemaVersion !== 1 && raw.schemaVersion !== 2)
+    (raw.schemaVersion !== 1 &&
+      raw.schemaVersion !== 2 &&
+      raw.schemaVersion !== 3)
   ) {
     return createInitialState(now);
   }
@@ -34,13 +43,33 @@ export function migrateState(raw: unknown, now = new Date()): PersistedState {
   const stored = raw as StoredState;
   return {
     ...stored,
-    schemaVersion: 2,
+    schemaVersion: 3,
     rules: stored.rules.map(normalizeRule),
+    usageByRule: Object.fromEntries(
+      Object.entries(stored.usageByRule).map(([ruleId, usage]) => [
+        ruleId,
+        migrateUsage(usage),
+      ]),
+    ),
     pendingChanges: stored.pendingChanges.map((change) =>
       change.replacement
         ? { ...change, replacement: normalizeRule(change.replacement) }
         : change,
     ),
+  };
+}
+
+function migrateUsage(usage: DailyUsage | LegacyDailyUsage): DailyUsage {
+  const legacy = usage as LegacyDailyUsage;
+  const overrideSessionExpiresAt =
+    usage.overrideSessionExpiresAt ?? legacy.emergencyPassExpiresAt;
+  return {
+    ruleId: usage.ruleId,
+    localDate: usage.localDate,
+    visitsUsed: usage.visitsUsed,
+    ...(overrideSessionExpiresAt === undefined
+      ? {}
+      : { overrideSessionExpiresAt }),
   };
 }
 

@@ -1,15 +1,15 @@
 import { localDateKey } from "./date";
 import type { DailyUsage, EntryDecision, RuleStatus, SiteRule } from "./types";
 
-export const EMERGENCY_PASS_DURATION_MS = 10 * 60 * 1000;
-export const EMERGENCY_PAUSE_SECONDS = 15;
+export const OVERRIDE_SESSION_DURATION_MS = 10 * 60 * 1000;
+export const OVERRIDE_PAUSE_SECONDS = 15;
+export const MINIMUM_INTENTION_LENGTH = 50;
 
 export function createDailyUsage(ruleId: string, now: Date): DailyUsage {
   return {
     ruleId,
     localDate: localDateKey(now),
     visitsUsed: 0,
-    emergencyPassUsed: false,
   };
 }
 
@@ -20,11 +20,11 @@ export function currentUsage(
 ): DailyUsage {
   if (usage?.localDate === localDateKey(now)) {
     if (
-      usage.emergencyPassExpiresAt !== undefined &&
-      usage.emergencyPassExpiresAt <= now.getTime()
+      usage.overrideSessionExpiresAt !== undefined &&
+      usage.overrideSessionExpiresAt <= now.getTime()
     ) {
       const expired = { ...usage };
-      delete expired.emergencyPassExpiresAt;
+      delete expired.overrideSessionExpiresAt;
       return expired;
     }
     return { ...usage };
@@ -43,13 +43,13 @@ export function evaluateEntry(
 
   const usage = currentUsage(rule.id, existingUsage, now);
   if (
-    usage.emergencyPassExpiresAt !== undefined &&
-    usage.emergencyPassExpiresAt > now.getTime()
+    usage.overrideSessionExpiresAt !== undefined &&
+    usage.overrideSessionExpiresAt > now.getTime()
   ) {
     return {
-      kind: "emergency-access",
+      kind: "override-session",
       ruleId: rule.id,
-      expiresAt: usage.emergencyPassExpiresAt,
+      expiresAt: usage.overrideSessionExpiresAt,
       usage,
     };
   }
@@ -69,7 +69,6 @@ export function evaluateEntry(
     kind: "limit-reached",
     ruleId: rule.id,
     usage,
-    emergencyPassAvailable: !usage.emergencyPassUsed,
   };
 }
 
@@ -84,14 +83,14 @@ export function getRuleStatus(
 
   const usage = currentUsage(rule.id, existingUsage, now);
   if (
-    usage.emergencyPassExpiresAt !== undefined &&
-    usage.emergencyPassExpiresAt > now.getTime()
+    usage.overrideSessionExpiresAt !== undefined &&
+    usage.overrideSessionExpiresAt > now.getTime()
   ) {
     return {
-      kind: "emergency-access",
+      kind: "override-session",
       rule,
       usage,
-      expiresAt: usage.emergencyPassExpiresAt,
+      expiresAt: usage.overrideSessionExpiresAt,
     };
   }
 
@@ -109,21 +108,22 @@ export function getRuleStatus(
     kind: "limit-reached",
     rule,
     usage,
-    emergencyPassAvailable: !usage.emergencyPassUsed,
   };
 }
 
-export function startEmergencyPass(
+export function startOverrideSession(
   rule: SiteRule,
   existingUsage: DailyUsage | undefined,
   intention: string,
   now: Date,
 ): DailyUsage {
-  if (!intention.trim()) {
-    throw new Error("Write a short intention before continuing.");
+  if (intention.trim().length < MINIMUM_INTENTION_LENGTH) {
+    throw new Error(
+      `Write at least ${MINIMUM_INTENTION_LENGTH} characters before continuing.`,
+    );
   }
   if (rule.mode !== "visit-limit") {
-    throw new Error("Permanent blocks do not have an emergency pass.");
+    throw new Error("Permanent blocks do not have an emergency override.");
   }
 
   const usage = currentUsage(rule.id, existingUsage, now);
@@ -131,13 +131,8 @@ export function startEmergencyPass(
   if (usage.visitsUsed < limit) {
     throw new Error("The daily visit budget is not exhausted.");
   }
-  if (usage.emergencyPassUsed) {
-    throw new Error("Today's emergency pass has already been used.");
-  }
-
   return {
     ...usage,
-    emergencyPassUsed: true,
-    emergencyPassExpiresAt: now.getTime() + EMERGENCY_PASS_DURATION_MS,
+    overrideSessionExpiresAt: now.getTime() + OVERRIDE_SESSION_DURATION_MS,
   };
 }
