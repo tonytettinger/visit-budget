@@ -6,7 +6,7 @@ Architecture impact: none; extends the existing core → platform → UI flow
 
 Stories covered: US-1, US-2, US-3, US-4, US-5
 
-Status: in progress
+Status: done · 2026-08-21
 
 Delivery: direct commits to `main`
 
@@ -79,7 +79,7 @@ and 1.0 release copy can be reviewed as one honest release candidate
 
 ## Phase 4 — Contract, privacy, and release hardening
 
-Status: done · 2026-08-21
+Status: done · 2026-08-21 · `dfbbf9e`
 
 Checkpoint: yes — the unpacked extension and deterministic ZIP are ready for
 manual Chrome review

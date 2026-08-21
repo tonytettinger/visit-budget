@@ -1,18 +1,6 @@
 # Roadmap — Visit Budget
 
-Last updated: 2026-08-05
-
-## Milestone: Deliberate friction controls
-
-Outcome: Users can choose stricter tab-return counting and still regain urgent
-access only through a repeatable, high-friction confirmation flow.
-
-- Optional tab-return counting — make attention-return semantics configurable
-  per rule without changing refresh or navigation behavior · plan:
-  `docs/plans/deliberate-friction-controls/plan.md`
-- Repeatable emergency overrides — replace the once-daily pass with a private
-  15-second, 50-character, code-confirmed flow · plan:
-  `docs/plans/deliberate-friction-controls/plan.md`
+Last updated: 2026-08-21
 
 ## Milestone: Private time awareness
 
@@ -44,11 +32,16 @@ budget and permanent blocking remain intact.
 ## Later
 
 - Cross-device settings sync — useful only after accounts have a justified
-  purpose beyond billing · from: original V1 non-goals
+  purpose beyond billing · from: original 1.0 non-goals
 - Additional premium friction patterns — evaluate from real user requests, not
   speculative feature bundling · from: user
 
 ## Shipped
 
-- Personal-first visit budgets, permanent blocks, daily locks, local-only state,
-  page-preserving guards, and one daily emergency pass — 2026-07-31
+- Deliberate friction controls — optional per-rule tab-return counting plus
+  repeatable, private, code-confirmed emergency overrides · 2026-08-21 ·
+  changelog: [feature] Add deliberate friction controls · plan:
+  `docs/plans/deliberate-friction-controls/plan.md`
+- Release-ready 1.0 foundation — local-only privacy model, security review,
+  deterministic production packaging, and Store submission materials ·
+  2026-08-21 · changelog: [infra] Harden and package the 1.0.0 release

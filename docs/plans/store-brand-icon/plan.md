@@ -7,13 +7,13 @@ Architecture impact: none
 Stories covered: none — deliberate store-readiness one-off outside the current
 roadmap milestone
 
-Status: in progress
+Status: done · 2026-08-21
 
 Delivery: direct commits to `main`
 
 ## Phase 1 — Quiet budget-ring mark
 
-Status: done · 2026-08-21
+Status: done · 2026-08-21 · `541dade`
 
 Checkpoint: yes — Chrome and the Web Store assets use a crisp, letter-free
 Visit Budget mark at every required icon size
@@ -37,7 +37,7 @@ Visit Budget mark at every required icon size
 
 ## Phase 2 — Pause-progress mark
 
-Status: done · 2026-08-21
+Status: done · 2026-08-21 · `3d25ebf`
 
 Checkpoint: yes — the chosen pause-and-progress direction is visible in Chrome
 and remains recognizable in the 16px toolbar asset
@@ -57,7 +57,7 @@ and remains recognizable in the 16px toolbar asset
 
 ## Phase 3 — Bottom accent refinement
 
-Status: done · 2026-08-21
+Status: done · 2026-08-21 · `202bfdb`
 
 Checkpoint: yes — the lower accent adds personality without reducing the
 pause-and-progress reading at toolbar size
