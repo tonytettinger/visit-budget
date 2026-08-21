@@ -55,9 +55,10 @@ product remains light-first in 1.0; dark mode is not part of this feature.
 
 ## Components
 
-**Brand mark** — A flat cobalt circle contains a white entry arrow crossing
-into an open budget ring. It expresses counted re-entry without relying on
-initials, clock imagery, gradients, or punitive stop symbols. The editable
+**Brand mark** — A transparent pause-and-progress mark pairs a bold pause
+symbol with an incomplete visit ring and a subtle browser-window contour. It
+expresses deliberate interruption and remaining budget without relying on
+initials, a generic lock, gradients, or punitive stop symbols. The editable
 source is `docs/design/visit-budget-icon.svg`; run `npm run icons` to generate
 the 16, 32, 48, and 128px Chrome PNGs plus the design master. Preserve the
 eight-pixel transparent safe area so the mark stays clear in both the toolbar

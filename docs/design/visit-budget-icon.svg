@@ -7,21 +7,39 @@
   aria-labelledby="title description"
 >
   <title id="title">Visit Budget</title>
-  <desc id="description">An entry arrow crossing into an open budget ring.</desc>
-  <circle cx="64" cy="64" r="56" fill="#155de0" />
+  <desc id="description">
+    A pause symbol inside an incomplete progress ring with a browser contour.
+  </desc>
+  <circle
+    cx="64"
+    cy="64"
+    r="49"
+    fill="none"
+    stroke="#155de0"
+    stroke-linecap="round"
+    stroke-width="11"
+    stroke-dasharray="235 73"
+    transform="rotate(-58 64 64)"
+  />
+  <circle
+    cx="64"
+    cy="64"
+    r="49"
+    fill="none"
+    stroke="#36b37e"
+    stroke-linecap="round"
+    stroke-width="11"
+    stroke-dasharray="52 256"
+    transform="rotate(18 64 64)"
+  />
+  <rect x="36" y="39" width="56" height="50" rx="15" fill="#0b2b5c" />
   <path
-    d="M48 34a36 36 0 1 1 0 60"
+    d="M50 50h28"
     fill="none"
     stroke="#fff"
     stroke-linecap="round"
-    stroke-width="10"
+    stroke-width="4"
   />
-  <path
-    d="M24 64h26m-11-11 11 11-11 11"
-    fill="none"
-    stroke="#fff"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="8"
-  />
+  <rect x="54" y="59" width="7" height="20" rx="3.5" fill="#fff" />
+  <rect x="67" y="59" width="7" height="20" rx="3.5" fill="#fff" />
 </svg>

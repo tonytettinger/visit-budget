@@ -7,7 +7,7 @@ Architecture impact: none
 Stories covered: none — deliberate store-readiness one-off outside the current
 roadmap milestone
 
-Status: done
+Status: in progress
 
 Delivery: direct commits to `main`
 
@@ -34,3 +34,23 @@ Visit Budget mark at every required icon size
   16px renderings from the built extension.
 - Commit: `feat: refresh Visit Budget brand icon`
 - Rollback: revert; the previous generated artwork remains available in Git
+
+## Phase 2 — Pause-progress mark
+
+Status: done · 2026-08-21
+
+Checkpoint: yes — the chosen pause-and-progress direction is visible in Chrome
+and remains recognizable in the 16px toolbar asset
+
+- Does: replace the first ring-and-arrow exploration with the selected
+  pause-progress direction, simplify the browser cue, regenerate all Chrome
+  icon sizes, and keep the mark letter-free and transparent.
+- Stories: none
+- Files: `docs/design/visit-budget-icon.svg`,
+  `docs/design/visit-budget-icon-master.png`, `docs/DESIGN.md`,
+  `public/icons/`, `docs/plans/store-brand-icon/plan.md`
+- Test: no automated UI test — validate exact PNG dimensions and alpha, run
+  project checks, and visually inspect the 128px and 16px renderings from the
+  built extension.
+- Commit: `feat: refine Visit Budget icon`
+- Rollback: revert; Phase 1's mark is retained in Git
