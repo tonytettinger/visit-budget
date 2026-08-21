@@ -55,6 +55,14 @@ product remains light-first in v0.1; dark mode is not part of this feature.
 
 ## Components
 
+**Brand mark** — A flat cobalt circle contains a white entry arrow crossing
+into an open budget ring. It expresses counted re-entry without relying on
+initials, clock imagery, gradients, or punitive stop symbols. The editable
+source is `docs/design/visit-budget-icon.svg`; run `npm run icons` to generate
+the 16, 32, 48, and 128px Chrome PNGs plus the design master. Preserve the
+eight-pixel transparent safe area so the mark stays clear in both the toolbar
+and Chrome Web Store.
+
 **Buttons** — Primary actions use the accent fill; secondary actions use an
 accent outline; destructive text actions use the danger token. Disabled state
 must remain visibly distinct and expose native disabled semantics.

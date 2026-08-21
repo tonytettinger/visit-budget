@@ -28,7 +28,9 @@ export async function requestRulePermissionWithContext(
 
     const panel = element("div", "permission-dialog-panel");
     const heading = element("div", "permission-dialog-heading");
-    const mark = element("span", "permission-dialog-mark", "VB");
+    const mark = element("img", "permission-dialog-mark");
+    mark.src = chrome.runtime.getURL("icons/icon-48.png");
+    mark.alt = "";
     mark.setAttribute("aria-hidden", "true");
     const headingCopy = element("div", "");
     headingCopy.append(

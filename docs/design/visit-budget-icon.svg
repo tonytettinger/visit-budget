@@ -1,0 +1,27 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="100%"
+  height="100%"
+  viewBox="0 0 128 128"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">Visit Budget</title>
+  <desc id="description">An entry arrow crossing into an open budget ring.</desc>
+  <circle cx="64" cy="64" r="56" fill="#155de0" />
+  <path
+    d="M48 34a36 36 0 1 1 0 60"
+    fill="none"
+    stroke="#fff"
+    stroke-linecap="round"
+    stroke-width="10"
+  />
+  <path
+    d="M24 64h26m-11-11 11 11-11 11"
+    fill="none"
+    stroke="#fff"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="8"
+  />
+</svg>

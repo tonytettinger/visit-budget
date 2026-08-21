@@ -129,17 +129,10 @@ function renderGate(
       }
       .panel { max-width: 440px; text-align: center; width: 100%; }
       .mark {
-        align-items: center;
-        border: 1px solid #155de0;
-        border-radius: 50%;
-        color: #155de0;
-        display: inline-flex;
-        font-size: 16px;
-        font-weight: 700;
-        height: 52px;
-        justify-content: center;
+        display: inline-block;
+        height: 48px;
         margin-bottom: 28px;
-        width: 52px;
+        width: 48px;
       }
       h1 { font-size: 26px; letter-spacing: -0.025em; line-height: 1.2; margin: 0 0 10px; }
       .site { color: #5f6673; font-size: 15px; margin: 0 0 8px; }
@@ -180,7 +173,7 @@ function renderGate(
     </style>
     <main class="backdrop" role="dialog" aria-modal="true" aria-labelledby="visit-budget-title">
       <section class="panel">
-        <div class="mark" aria-hidden="true">VB</div>
+        <img class="mark" src="${chrome.runtime.getURL("icons/icon-48.png")}" alt="" aria-hidden="true">
         <h1 id="visit-budget-title"></h1>
         <p class="site"></p>
         <p class="reset"></p>

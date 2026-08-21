@@ -63,21 +63,13 @@ button {
 }
 
 .brand-mark {
-  align-items: center;
-  border: 1px solid var(--accent);
-  border-radius: 50%;
-  color: var(--accent);
-  display: inline-flex;
-  font-size: 10px;
-  font-weight: 760;
+  display: block;
+  flex: 0 0 auto;
   height: 28px;
-  justify-content: center;
-  letter-spacing: -0.05em;
   width: 28px;
 }
 
 .brand-large .brand-mark {
-  font-size: 12px;
   height: 36px;
   width: 36px;
 }
@@ -620,17 +612,9 @@ textarea {
 }
 
 .permission-dialog-mark {
-  align-items: center;
-  border: 1px solid var(--accent);
-  border-radius: 50%;
-  color: var(--accent);
-  display: inline-flex;
+  display: block;
   flex: 0 0 auto;
-  font-size: 10px;
-  font-weight: 760;
   height: 38px;
-  justify-content: center;
-  letter-spacing: -0.05em;
   width: 38px;
 }
 
@@ -810,15 +794,8 @@ textarea {
 }
 
 .blocked-mark {
-  align-items: center;
-  border: 1px solid var(--accent);
-  border-radius: 50%;
-  color: var(--accent);
-  display: inline-flex;
-  font-size: 17px;
-  font-weight: 730;
+  display: inline-block;
   height: 58px;
-  justify-content: center;
   margin-bottom: 30px;
   width: 58px;
 }
