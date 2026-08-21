@@ -54,3 +54,23 @@ and remains recognizable in the 16px toolbar asset
   built extension.
 - Commit: `feat: refine Visit Budget icon`
 - Rollback: revert; Phase 1's mark is retained in Git
+
+## Phase 3 — Bottom accent refinement
+
+Status: done · 2026-08-21
+
+Checkpoint: yes — the lower accent adds personality without reducing the
+pause-and-progress reading at toolbar size
+
+- Does: move the green progress segment to the bottom center so the compact
+  mark has a subtle shirt-like silhouette while remaining a professional,
+  letter-free icon.
+- Stories: none
+- Files: `docs/design/visit-budget-icon.svg`,
+  `docs/design/visit-budget-icon-master.png`, `docs/DESIGN.md`,
+  `public/icons/`, `docs/plans/store-brand-icon/plan.md`
+- Test: no automated UI test — validate exact PNG dimensions and alpha, run
+  project checks, and visually inspect the 128px and 16px renderings from the
+  built extension.
+- Commit: `feat: add bottom accent to Visit Budget icon`
+- Rollback: revert; Phase 2's mark remains available in Git

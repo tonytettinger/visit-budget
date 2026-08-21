@@ -30,7 +30,7 @@
     stroke-linecap="round"
     stroke-width="11"
     stroke-dasharray="52 256"
-    transform="rotate(18 64 64)"
+    transform="rotate(60 64 64)"
   />
   <rect x="36" y="39" width="56" height="50" rx="15" fill="#0b2b5c" />
   <path
