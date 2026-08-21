@@ -43,6 +43,10 @@
               spellcheck="true"
               placeholder="For example: check one email, then leave"
             ></textarea>
+            <span class="intention-meta">
+              <span>Your intention is not saved.</span>
+              <span id="intention-count">0 / 50</span>
+            </span>
           </label>
           <button
             class="button secondary"
@@ -54,6 +58,49 @@
           </button>
         </section>
         <p class="form-error centered" id="blocked-error" role="alert"></p>
+
+        <dialog
+          class="confirmation-dialog"
+          id="override-confirmation"
+          aria-labelledby="confirmation-title"
+          aria-describedby="confirmation-description"
+        >
+          <div class="confirmation-panel">
+            <h2 id="confirmation-title">Are you sure?</h2>
+            <p id="confirmation-description">
+              Type this code exactly to start 10 minutes of access.
+            </p>
+            <output class="confirmation-code" id="override-code"></output>
+            <label class="field">
+              <span>Confirmation code</span>
+              <input
+                id="confirmation-code"
+                type="text"
+                maxlength="5"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              />
+            </label>
+            <p class="form-error" id="confirmation-error" role="alert"></p>
+            <div class="confirmation-actions">
+              <button
+                class="button secondary"
+                id="cancel-confirmation"
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                class="button primary"
+                id="confirm-override"
+                type="button"
+              >
+                Confirm override
+              </button>
+            </div>
+          </div>
+        </dialog>
       </section>
     </main>
     <script src="blocked.js"></script>

@@ -4,6 +4,7 @@ import type {
   ClientRequest,
   ClientResponse,
   GuardUpdate,
+  OverrideConfirmationResult,
   OverrideSessionResult,
   PageContext,
 } from "../shared/messages";
@@ -149,6 +150,18 @@ function renderGate(
         width: 100%;
       }
       textarea:focus { border-color: #155de0; box-shadow: 0 0 0 3px #eaf1ff; outline: none; }
+      input {
+        border: 1px solid #c9ced9;
+        border-radius: 10px;
+        box-sizing: border-box;
+        color: #17191f;
+        font: inherit;
+        min-height: 44px;
+        padding: 10px 12px;
+        width: 100%;
+      }
+      input:focus { border-color: #155de0; box-shadow: 0 0 0 3px #eaf1ff; outline: none; }
+      .intention-meta { color: #5f6673; display: flex; font-size: 11px; justify-content: space-between; }
       .actions { display: grid; gap: 10px; }
       button {
         border: 1px solid #155de0;
@@ -164,6 +177,14 @@ function renderGate(
       button:focus-visible { box-shadow: 0 0 0 3px #cddfff; outline: none; }
       .pass-note, .error { color: #5f6673; font-size: 13px; line-height: 1.5; margin: 16px 0 0; }
       .error { color: #9a2f20; min-height: 20px; }
+      dialog { background: transparent; border: 0; max-width: 430px; padding: 0; width: calc(100% - 32px); }
+      dialog::backdrop { background: rgba(23, 25, 31, 0.42); }
+      .confirmation-panel { background: #fff; border: 1px solid #d8dce5; border-radius: 10px; box-shadow: 0 14px 40px rgba(22, 28, 45, 0.1); padding: 26px; text-align: left; }
+      .confirmation-panel h2 { font-size: 22px; letter-spacing: -0.025em; margin: 0 0 8px; }
+      .confirmation-panel > p { color: #5f6673; line-height: 1.5; margin: 0 0 18px; }
+      .confirmation-panel > .error { color: #9a2f20; margin: 0; min-height: 20px; }
+      .confirmation-code { background: #eaf1ff; border-radius: 10px; color: #155de0; display: block; font: 700 28px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.18em; padding: 14px 16px; text-align: center; }
+      .confirmation-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
       @media (prefers-reduced-motion: no-preference) {
         .panel { animation: enter 160ms ease-out; }
         @keyframes enter { from { opacity: 0; transform: translateY(5px); } }
@@ -180,7 +201,7 @@ function renderGate(
           <button class="primary leave" type="button">Leave for now</button>
         </div>
         <div class="override-area"></div>
-        <p class="error" role="alert"></p>
+        <p class="error gate-error" role="alert"></p>
       </section>
     </main>
   `;
@@ -216,13 +237,43 @@ function renderOverrideForm(
     <p class="pass-note">A 10-minute emergency override is available. Pause for 15 seconds, then describe what you intend to do in at least 50 characters.</p>
     <label for="visit-budget-intention">What do you intend to do?</label>
     <textarea id="visit-budget-intention" maxlength="240" inputmode="text" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="For example: check one email, then leave"></textarea>
+    <div class="intention-meta"><span>Your intention is not saved.</span><span class="intention-count">0 / 50</span></div>
     <div class="actions" style="margin-top: 10px">
       <button class="secondary override" type="button" disabled></button>
     </div>
+    <dialog aria-labelledby="visit-budget-confirmation-title" aria-describedby="visit-budget-confirmation-description">
+      <div class="confirmation-panel">
+        <h2 id="visit-budget-confirmation-title">Are you sure?</h2>
+        <p id="visit-budget-confirmation-description">Type this code exactly to start 10 minutes of access.</p>
+        <output class="confirmation-code"></output>
+        <label for="visit-budget-confirmation-code">Confirmation code</label>
+        <input id="visit-budget-confirmation-code" type="text" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <p class="confirmation-error error" role="alert"></p>
+        <div class="confirmation-actions">
+          <button class="secondary cancel-confirmation" type="button">Cancel</button>
+          <button class="primary confirm-override" type="button">Confirm override</button>
+        </div>
+      </div>
+    </dialog>
   `;
   const input = requiredElement<HTMLTextAreaElement>(shadow, "textarea");
   const button = requiredElement<HTMLButtonElement>(shadow, ".override");
-  const error = requiredElement<HTMLElement>(shadow, ".error");
+  const error = requiredElement<HTMLElement>(shadow, ".gate-error");
+  const count = requiredElement<HTMLElement>(shadow, ".intention-count");
+  const dialog = requiredElement<HTMLDialogElement>(shadow, "dialog");
+  const codeOutput = requiredElement<HTMLElement>(shadow, ".confirmation-code");
+  const codeInput = requiredElement<HTMLInputElement>(
+    shadow,
+    "#visit-budget-confirmation-code",
+  );
+  const confirmationError = requiredElement<HTMLElement>(
+    shadow,
+    ".confirmation-error",
+  );
+  const confirmButton = requiredElement<HTMLButtonElement>(
+    shadow,
+    ".confirm-override",
+  );
 
   const update = (): void => {
     const seconds = Math.max(
@@ -230,7 +281,9 @@ function renderOverrideForm(
       Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
     );
     button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
-    button.disabled = seconds > 0 || input.value.trim().length < 50;
+    const intentionLength = input.value.trim().length;
+    count.textContent = `${intentionLength} / 50`;
+    button.disabled = seconds > 0 || intentionLength < 50;
     if (seconds === 0) {
       clearInterval(timer);
     }
@@ -241,20 +294,64 @@ function renderOverrideForm(
   button.addEventListener("click", () => {
     button.disabled = true;
     error.textContent = "";
-    void sendRequest<OverrideSessionResult>({
-      type: "START_OVERRIDE_SESSION",
+    void sendRequest<OverrideConfirmationResult>({
+      type: "START_OVERRIDE_CONFIRMATION",
       ruleId: context.rule.id,
       intention: input.value,
     })
+      .then((result) => {
+        codeOutput.textContent = result.code;
+        codeInput.value = "";
+        confirmationError.textContent = "";
+        dialog.showModal();
+        codeInput.focus();
+      })
+      .catch((caught: unknown) => {
+        error.textContent = errorMessage(caught);
+        update();
+      });
+  });
+
+  const cancel = (): void => {
+    void sendRequest({
+      type: "CANCEL_OVERRIDE_CONFIRMATION",
+      ruleId: context.rule.id,
+    })
+      .catch(() => undefined)
+      .finally(() => {
+        dialog.close();
+        update();
+        button.focus();
+      });
+  };
+  requiredElement<HTMLButtonElement>(
+    shadow,
+    ".cancel-confirmation",
+  ).addEventListener("click", cancel);
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    cancel();
+  });
+  confirmButton.addEventListener("click", () => {
+    confirmButton.disabled = true;
+    confirmationError.textContent = "";
+    void sendRequest<OverrideSessionResult>({
+      type: "CONFIRM_OVERRIDE",
+      ruleId: context.rule.id,
+      intention: input.value,
+      code: codeInput.value,
+    })
       .then(() => {
         clearInterval(timer);
+        dialog.close();
         removeGate();
         removeCurtain();
         showOverrideToast(context.rule.hostname);
       })
       .catch((caught: unknown) => {
-        error.textContent = errorMessage(caught);
-        update();
+        confirmationError.textContent = errorMessage(caught);
+        confirmButton.disabled = false;
+        codeInput.focus();
       });
   });
   update();

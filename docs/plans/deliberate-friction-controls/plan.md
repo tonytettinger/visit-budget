@@ -34,7 +34,7 @@ demonstrates both counting modes
 
 ## Phase 2 — Repeatable private override baseline
 
-Status: done · 2026-08-21
+Status: done · 2026-08-21 · `2672b68`
 
 Checkpoint: no
 
@@ -57,7 +57,7 @@ Checkpoint: no
 
 ## Phase 3 — Code-confirmation interface
 
-Status: todo
+Status: done · 2026-08-21
 
 Checkpoint: no — moved to Phase 4 so the completed override flow, security audit,
 and 1.0 release copy can be reviewed as one honest release candidate
@@ -67,11 +67,13 @@ and 1.0 release copy can be reviewed as one honest release candidate
   overlay surfaces.
 - Stories: US-3, US-4, US-5
 - Files: `src/core/types.ts`, `src/shared/messages.ts`,
-  `src/background/service-worker.ts`, `src/ui/blocked.ts`,
+  `src/core/engine.ts`, `src/background/service-worker.ts`, `src/ui/blocked.ts`,
   `src/content/guard.ts`, `public/blocked.html`, `public/styles.css`,
-  `docs/DESIGN.md`, `tests/e2e/visit-budget.spec.ts`
-- Test: E2E coverage for wrong code, cancellation, regenerated code, successful
-  10-minute access, expiry/retry, permanent blocks, and service-worker restart
+  `docs/DESIGN.md`, `tests/unit/engine.test.ts`,
+  `tests/e2e/visit-budget.spec.ts`
+- Test: unit coverage for expiry/retry; E2E coverage for wrong code,
+  cancellation, regenerated code, successful 10-minute access, permanent
+  blocks, and missing session challenge state failing closed
 - Commit: `feat: require code confirmation for overrides`
 - Rollback: revert
 

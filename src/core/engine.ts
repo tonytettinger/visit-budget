@@ -117,6 +117,19 @@ export function startOverrideSession(
   intention: string,
   now: Date,
 ): DailyUsage {
+  const usage = validateOverrideRequest(rule, existingUsage, intention, now);
+  return {
+    ...usage,
+    overrideSessionExpiresAt: now.getTime() + OVERRIDE_SESSION_DURATION_MS,
+  };
+}
+
+export function validateOverrideRequest(
+  rule: SiteRule,
+  existingUsage: DailyUsage | undefined,
+  intention: string,
+  now: Date,
+): DailyUsage {
   if (intention.trim().length < MINIMUM_INTENTION_LENGTH) {
     throw new Error(
       `Write at least ${MINIMUM_INTENTION_LENGTH} characters before continuing.`,
@@ -131,8 +144,5 @@ export function startOverrideSession(
   if (usage.visitsUsed < limit) {
     throw new Error("The daily visit budget is not exhausted.");
   }
-  return {
-    ...usage,
-    overrideSessionExpiresAt: now.getTime() + OVERRIDE_SESSION_DURATION_MS,
-  };
+  return usage;
 }

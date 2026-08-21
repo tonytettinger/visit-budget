@@ -36,6 +36,13 @@ export interface EntryReceipt {
   createdAt: number;
 }
 
+export interface OverrideChallenge {
+  issuedAt: number;
+  code?: string;
+  codeIssuedAt?: number;
+  previousCode?: string;
+}
+
 export interface PersistedState {
   schemaVersion: 3;
   localDate: string;
@@ -52,7 +59,7 @@ export interface SessionState {
   activeUrl?: string;
   activeAccess?: "allowed" | "override-session" | "blocked";
   activeRemaining?: number;
-  overrideChallengeByRule?: Record<string, number>;
+  overrideChallengeByRule?: Record<string, OverrideChallenge>;
   entryReceiptByTab?: Record<string, EntryReceipt>;
 }
 

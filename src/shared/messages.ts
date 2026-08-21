@@ -17,9 +17,16 @@ export type ClientRequest =
   | { type: "CANCEL_PENDING_CHANGE"; ruleId: string }
   | { type: "OPEN_FRESH_TAB" }
   | {
-      type: "START_OVERRIDE_SESSION";
+      type: "START_OVERRIDE_CONFIRMATION";
       ruleId: string;
       intention: string;
+    }
+  | { type: "CANCEL_OVERRIDE_CONFIRMATION"; ruleId: string }
+  | {
+      type: "CONFIRM_OVERRIDE";
+      ruleId: string;
+      intention: string;
+      code: string;
     };
 
 export interface CurrentSiteView {
@@ -66,10 +73,15 @@ export interface OverrideSessionResult {
   expiresAt: number;
 }
 
+export interface OverrideConfirmationResult {
+  code: string;
+}
+
 export type ClientPayload =
   | BlockedContext
   | CurrentSiteView
   | DeleteRuleResult
+  | OverrideConfirmationResult
   | OverrideSessionResult
   | EntryDecision
   | SaveRuleResult

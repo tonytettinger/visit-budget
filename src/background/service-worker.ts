@@ -3,6 +3,7 @@ import {
   evaluateEntry,
   getRuleStatus,
   startOverrideSession,
+  validateOverrideRequest,
 } from "../core/engine";
 import { findMatchingRule } from "../core/rules";
 import { cancelPendingChange, deleteRule, saveRule } from "../core/state";
@@ -49,6 +50,10 @@ import type {
 import { isClientRequest } from "../shared/messages";
 
 const OVERRIDE_PAUSE_MS = 15_000;
+const OVERRIDE_CONFIRMATION_TTL_MS = 5 * 60 * 1000;
+const OVERRIDE_CODE_LENGTH = 5;
+const OVERRIDE_CODE_ALPHABET =
+  "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 let blockingFingerprint = "";
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -221,6 +226,7 @@ async function handleRequest(
   | { scheduled: boolean; state: PersistedState }
   | { cancelled: true }
   | { opened: true }
+  | { code: string }
   | { expiresAt: number }
 > {
   switch (request.type) {
@@ -264,8 +270,13 @@ async function handleRequest(
       await saveState(state);
       return { cancelled: true };
     }
-    case "START_OVERRIDE_SESSION":
-      return activateOverrideSession(request.ruleId, request.intention);
+    case "START_OVERRIDE_CONFIRMATION":
+      return startOverrideConfirmation(request.ruleId, request.intention);
+    case "CANCEL_OVERRIDE_CONFIRMATION":
+      await cancelOverrideConfirmation(request.ruleId);
+      return { cancelled: true };
+    case "CONFIRM_OVERRIDE":
+      return confirmOverride(request.ruleId, request.intention, request.code);
   }
 }
 
@@ -606,38 +617,107 @@ async function getBlockedContext(ruleId: string): Promise<BlockedContext> {
     return { kind: "stale-rule" };
   }
 
-  const challenges = { ...(session.overrideChallengeByRule ?? {}) };
-  const issuedAt = challenges[ruleId] ?? Date.now();
-  challenges[ruleId] = issuedAt;
-  await saveSession({
-    ...session,
-    overrideChallengeByRule: challenges,
-  });
-  const status = getRuleStatus(rule, state.usageByRule[rule.id], new Date());
+  const now = new Date();
+  const status = getRuleStatus(rule, state.usageByRule[rule.id], now);
   if (status.kind === "untracked") {
     return { kind: "stale-rule" };
+  }
+
+  let challengeReadyAt = now.getTime();
+  if (status.kind === "limit-reached") {
+    const challenges = { ...(session.overrideChallengeByRule ?? {}) };
+    const existing = challenges[ruleId];
+    const issuedAt = existing?.issuedAt ?? now.getTime();
+    const previousCode = existing?.code ?? existing?.previousCode;
+    challenges[ruleId] = {
+      issuedAt,
+      ...(previousCode ? { previousCode } : {}),
+    };
+    challengeReadyAt = issuedAt + OVERRIDE_PAUSE_MS;
+    await saveSession({
+      ...session,
+      overrideChallengeByRule: challenges,
+    });
   }
 
   return {
     kind: "active-block",
     rule,
     status,
-    challengeReadyAt: issuedAt + OVERRIDE_PAUSE_MS,
-    resetLabel: formatResetTime(new Date()),
+    challengeReadyAt,
+    resetLabel: formatResetTime(now),
   };
 }
 
-async function activateOverrideSession(
+async function startOverrideConfirmation(
   ruleId: string,
   intention: string,
+): Promise<{ code: string }> {
+  const now = new Date();
+  const state = await loadState(now);
+  const rule = requireRule(state, ruleId);
+  const session = await loadSession();
+  const challenge = session.overrideChallengeByRule?.[ruleId];
+  if (
+    challenge === undefined ||
+    challenge.issuedAt + OVERRIDE_PAUSE_MS > now.getTime()
+  ) {
+    throw new Error("The 15-second pause is still in progress.");
+  }
+
+  validateOverrideRequest(rule, state.usageByRule[rule.id], intention, now);
+  const previousCode = challenge.code ?? challenge.previousCode;
+  const code = generateOverrideCode(previousCode);
+  const challenges = {
+    ...(session.overrideChallengeByRule ?? {}),
+    [ruleId]: {
+      issuedAt: challenge.issuedAt,
+      code,
+      codeIssuedAt: now.getTime(),
+      ...(previousCode ? { previousCode } : {}),
+    },
+  };
+  await saveSession({ ...session, overrideChallengeByRule: challenges });
+  return { code };
+}
+
+async function cancelOverrideConfirmation(ruleId: string): Promise<void> {
+  const session = await loadSession();
+  const challenge = session.overrideChallengeByRule?.[ruleId];
+  if (!challenge) {
+    return;
+  }
+  const challenges = {
+    ...(session.overrideChallengeByRule ?? {}),
+    [ruleId]: {
+      issuedAt: challenge.issuedAt,
+      ...(challenge.code || challenge.previousCode
+        ? { previousCode: challenge.code ?? challenge.previousCode }
+        : {}),
+    },
+  };
+  await saveSession({ ...session, overrideChallengeByRule: challenges });
+}
+
+async function confirmOverride(
+  ruleId: string,
+  intention: string,
+  code: string,
 ): Promise<{ expiresAt: number }> {
   const now = new Date();
   const state = await loadState(now);
   const rule = requireRule(state, ruleId);
   const session = await loadSession();
-  const issuedAt = session.overrideChallengeByRule?.[ruleId];
-  if (issuedAt === undefined || issuedAt + OVERRIDE_PAUSE_MS > now.getTime()) {
-    throw new Error("The 15-second pause is still in progress.");
+  const challenge = session.overrideChallengeByRule?.[ruleId];
+  if (!challenge?.code || challenge.codeIssuedAt === undefined) {
+    throw new Error("Start a new confirmation before continuing.");
+  }
+  if (challenge.codeIssuedAt + OVERRIDE_CONFIRMATION_TTL_MS <= now.getTime()) {
+    await cancelOverrideConfirmation(ruleId);
+    throw new Error("This confirmation expired. Generate a new code.");
+  }
+  if (code !== challenge.code) {
+    throw new Error("The confirmation code does not match.");
   }
 
   const usage = startOverrideSession(
@@ -664,6 +744,20 @@ async function activateOverrideSession(
   await reconcileAll(state, nextSession, false);
   await refreshAllAccessibleGuards(state, nextSession);
   return { expiresAt: usage.overrideSessionExpiresAt ?? now.getTime() };
+}
+
+function generateOverrideCode(previousCode?: string): string {
+  for (;;) {
+    const values = crypto.getRandomValues(
+      new Uint32Array(OVERRIDE_CODE_LENGTH),
+    );
+    const code = Array.from(values, (value) => {
+      return OVERRIDE_CODE_ALPHABET[value % OVERRIDE_CODE_ALPHABET.length];
+    }).join("");
+    if (code !== previousCode) {
+      return code;
+    }
+  }
 }
 
 async function reconcileAll(
@@ -741,7 +835,7 @@ async function notifyGuard(
   };
   const challengeIssuedAt =
     status.kind === "limit-reached" || status.kind === "permanently-blocked"
-      ? session.overrideChallengeByRule?.[status.rule.id]
+      ? session.overrideChallengeByRule?.[status.rule.id]?.issuedAt
       : undefined;
   if (
     (status.kind === "limit-reached" ||

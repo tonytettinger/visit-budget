@@ -95,6 +95,34 @@ test("limits re-entry and grants a private override session", async () => {
     await expect(intention).toHaveValue(intentionText);
     await page.getByRole("button", { name: "Continue" }).click();
 
+    const dialog = page.getByRole("dialog", { name: "Are you sure?" });
+    await expect(dialog).toBeVisible();
+    if (process.env.CAPTURE_QA) {
+      await page.setViewportSize({ width: 900, height: 760 });
+      await page.screenshot({
+        path: "/tmp/visit-budget-override-confirmation.png",
+        fullPage: false,
+      });
+    }
+    const firstCode = await page.locator("#override-code").textContent();
+    expect(firstCode).toMatch(/^[A-HJ-NP-Za-km-z2-9]{5}$/);
+    const wrongCode = `${firstCode?.[0] === "A" ? "B" : "A"}${firstCode?.slice(1)}`;
+    await page.getByLabel("Confirmation code").fill(wrongCode);
+    await page.getByRole("button", { name: "Confirm override" }).click();
+    await expect(
+      page.getByText("confirmation code does not match"),
+    ).toBeVisible();
+    await expect(intention).toHaveValue(intentionText);
+
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toBeHidden();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(dialog).toBeVisible();
+    const secondCode = await page.locator("#override-code").textContent();
+    expect(secondCode).not.toBe(firstCode);
+    await page.getByLabel("Confirmation code").fill(secondCode ?? "");
+    await page.getByRole("button", { name: "Confirm override" }).click();
+
     await expect(page).toHaveURL(primaryUrl());
     await expect(
       page.getByRole("heading", { name: "Test destination" }),
@@ -107,6 +135,47 @@ test("limits re-entry and grants a private override session", async () => {
       };
     });
     expect(JSON.stringify(storedState)).not.toContain(intentionText);
+  });
+});
+
+test("override confirmation fails closed without its session challenge", async () => {
+  await withExtension(async ({ context, extensionId }) => {
+    const options = await context.newPage();
+    await addRule(options, extensionId, {
+      website: "127.0.0.1",
+      mode: "visit-limit",
+      limit: 1,
+    });
+
+    const page = await context.newPage();
+    await page.goto(primaryUrl());
+    await page.goto(awayUrl());
+    await waitForDynamicBlock(options, extensionId);
+    await page.goto(primaryUrl());
+    await makeEmergencyPauseReady(page);
+    await page.reload();
+    await page
+      .getByLabel("What do you intend to do?")
+      .fill(
+        "Open the expected account message, respond only if required, then leave.",
+      );
+    await page.getByRole("button", { name: "Continue" }).click();
+    const code = await page.locator("#override-code").textContent();
+
+    await options.evaluate(async () => {
+      const key = "visitBudgetSession";
+      const stored = await chrome.storage.session.get(key);
+      const session = (stored[key] ?? {}) as Record<string, unknown>;
+      delete session.overrideChallengeByRule;
+      await chrome.storage.session.set({ [key]: session });
+    });
+
+    await page.getByLabel("Confirmation code").fill(code ?? "");
+    await page.getByRole("button", { name: "Confirm override" }).click();
+    await expect(page.getByText("Start a new confirmation")).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`chrome-extension://${extensionId}/blocked\\.html`),
+    );
   });
 });
 
@@ -460,6 +529,7 @@ test("permanent blocks redirect before destination content is shown", async () =
       page.getByRole("heading", { name: "This website is blocked" }),
     ).toBeVisible();
     await expect(page.getByText("Test destination")).toHaveCount(0);
+    await expect(page.getByText("emergency override")).toBeHidden();
     if (process.env.CAPTURE_QA) {
       await page.setViewportSize({ width: 900, height: 620 });
       await page.screenshot({
@@ -626,11 +696,14 @@ async function makeEmergencyPauseReady(page: Page): Promise<void> {
     const key = "visitBudgetSession";
     const stored = await chrome.storage.session.get(key);
     const session = (stored[key] ?? {}) as {
-      overrideChallengeByRule?: Record<string, number>;
+      overrideChallengeByRule?: Record<string, { issuedAt: number }>;
     };
     const challenges = session.overrideChallengeByRule ?? {};
     for (const ruleId of Object.keys(challenges)) {
-      challenges[ruleId] = Date.now() - 20_000;
+      const challenge = challenges[ruleId];
+      if (challenge) {
+        challenge.issuedAt = Date.now() - 20_000;
+      }
     }
     await chrome.storage.session.set({
       [key]: { ...session, overrideChallengeByRule: challenges },

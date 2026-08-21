@@ -843,6 +843,72 @@ textarea {
   text-align: left;
 }
 
+.intention-meta {
+  color: var(--muted);
+  display: flex;
+  font-size: 11px;
+  font-weight: 400;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.confirmation-dialog {
+  background: transparent;
+  border: 0;
+  max-width: 430px;
+  padding: 0;
+  width: calc(100% - 32px);
+}
+
+.confirmation-dialog::backdrop {
+  background: rgb(23 25 31 / 42%);
+}
+
+.confirmation-panel {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 26px;
+  text-align: left;
+}
+
+.confirmation-panel h2 {
+  font-size: 22px;
+  letter-spacing: -0.025em;
+  margin: 0 0 8px;
+}
+
+.confirmation-panel > p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 18px;
+}
+
+.confirmation-code {
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  color: var(--accent);
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.confirmation-panel .field {
+  margin-top: 18px;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
 @media (max-width: 800px) {
   .options-shell {
     padding: 20px;

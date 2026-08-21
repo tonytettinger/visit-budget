@@ -1,5 +1,9 @@
 import { MINIMUM_INTENTION_LENGTH } from "../core/engine";
-import type { BlockedContext, OverrideSessionResult } from "../shared/messages";
+import type {
+  BlockedContext,
+  OverrideConfirmationResult,
+  OverrideSessionResult,
+} from "../shared/messages";
 import { errorMessage, requiredElement, sendRequest } from "./client";
 
 const params = new URLSearchParams(location.search);
@@ -13,11 +17,26 @@ requiredElement<HTMLButtonElement>("#go-back").addEventListener(
 );
 requiredElement<HTMLTextAreaElement>("#intention").addEventListener(
   "input",
-  updatePassButton,
+  updateOverrideButton,
 );
 requiredElement<HTMLButtonElement>("#continue-override").addEventListener(
   "click",
-  () => void startOverride(),
+  () => void beginConfirmation(),
+);
+requiredElement<HTMLButtonElement>("#cancel-confirmation").addEventListener(
+  "click",
+  () => void cancelConfirmation(),
+);
+requiredElement<HTMLButtonElement>("#confirm-override").addEventListener(
+  "click",
+  () => void confirmOverride(),
+);
+requiredElement<HTMLDialogElement>("#override-confirmation").addEventListener(
+  "cancel",
+  (event) => {
+    event.preventDefault();
+    void cancelConfirmation();
+  },
 );
 
 let context: BlockedContext | undefined;
@@ -63,8 +82,8 @@ function render(
   const canOverride = value.status.kind === "limit-reached";
   overrideSection.hidden = !canOverride;
   if (canOverride) {
-    countdownTimer = window.setInterval(updatePassButton, 250);
-    updatePassButton();
+    countdownTimer = window.setInterval(updateOverrideButton, 250);
+    updateOverrideButton();
     requiredElement<HTMLTextAreaElement>("#intention").focus();
   }
 }
@@ -79,7 +98,7 @@ function renderStaleRule(): void {
   renderError("Use Leave for now, then open the website again if needed.");
 }
 
-function updatePassButton(): void {
+function updateOverrideButton(): void {
   const button = requiredElement<HTMLButtonElement>("#continue-override");
   const input = requiredElement<HTMLTextAreaElement>("#intention");
   if (!context || context.kind === "stale-rule") {
@@ -91,15 +110,17 @@ function updatePassButton(): void {
     Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
   );
   button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
-  button.disabled =
-    seconds > 0 || input.value.trim().length < MINIMUM_INTENTION_LENGTH;
+  const intentionLength = input.value.trim().length;
+  requiredElement<HTMLElement>("#intention-count").textContent =
+    `${intentionLength} / ${MINIMUM_INTENTION_LENGTH}`;
+  button.disabled = seconds > 0 || intentionLength < MINIMUM_INTENTION_LENGTH;
   if (seconds === 0 && countdownTimer !== undefined) {
     window.clearInterval(countdownTimer);
     countdownTimer = undefined;
   }
 }
 
-async function startOverride(): Promise<void> {
+async function beginConfirmation(): Promise<void> {
   if (!context || context.kind === "stale-rule") {
     return;
   }
@@ -108,15 +129,59 @@ async function startOverride(): Promise<void> {
   button.disabled = true;
   renderError("");
   try {
-    await sendRequest<OverrideSessionResult>({
-      type: "START_OVERRIDE_SESSION",
+    const result = await sendRequest<OverrideConfirmationResult>({
+      type: "START_OVERRIDE_CONFIRMATION",
       ruleId: context.rule.id,
       intention: input.value,
     });
-    location.replace(originalTarget || `https://${context.rule.hostname}/`);
+    showConfirmation(result.code);
   } catch (error) {
     renderError(errorMessage(error));
-    updatePassButton();
+    updateOverrideButton();
+  }
+}
+
+function showConfirmation(code: string): void {
+  requiredElement<HTMLElement>("#override-code").textContent = code;
+  requiredElement<HTMLInputElement>("#confirmation-code").value = "";
+  renderConfirmationError("");
+  const dialog = requiredElement<HTMLDialogElement>("#override-confirmation");
+  dialog.showModal();
+  requiredElement<HTMLInputElement>("#confirmation-code").focus();
+}
+
+async function cancelConfirmation(): Promise<void> {
+  const dialog = requiredElement<HTMLDialogElement>("#override-confirmation");
+  if (context?.kind === "active-block") {
+    await sendRequest({
+      type: "CANCEL_OVERRIDE_CONFIRMATION",
+      ruleId: context.rule.id,
+    }).catch(() => undefined);
+  }
+  dialog.close();
+  updateOverrideButton();
+  requiredElement<HTMLButtonElement>("#continue-override").focus();
+}
+
+async function confirmOverride(): Promise<void> {
+  if (!context || context.kind === "stale-rule") {
+    return;
+  }
+  const button = requiredElement<HTMLButtonElement>("#confirm-override");
+  button.disabled = true;
+  renderConfirmationError("");
+  try {
+    await sendRequest<OverrideSessionResult>({
+      type: "CONFIRM_OVERRIDE",
+      ruleId: context.rule.id,
+      intention: requiredElement<HTMLTextAreaElement>("#intention").value,
+      code: requiredElement<HTMLInputElement>("#confirmation-code").value,
+    });
+    location.replace(originalTarget || `https://${context.rule.hostname}/`);
+  } catch (error) {
+    renderConfirmationError(errorMessage(error));
+    button.disabled = false;
+    requiredElement<HTMLInputElement>("#confirmation-code").focus();
   }
 }
 
@@ -138,4 +203,8 @@ async function leaveForNow(): Promise<void> {
 
 function renderError(message: string): void {
   requiredElement<HTMLElement>("#blocked-error").textContent = message;
+}
+
+function renderConfirmationError(message: string): void {
+  requiredElement<HTMLElement>("#confirmation-error").textContent = message;
 }

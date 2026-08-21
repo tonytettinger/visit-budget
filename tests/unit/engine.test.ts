@@ -99,6 +99,22 @@ describe("emergency overrides", () => {
     ).toThrow("not exhausted");
   });
 
+  it("never grants an override for a permanent block", () => {
+    const permanentRule = {
+      ...limitedRule(),
+      mode: "permanent-block",
+    } as SiteRule;
+    delete permanentRule.dailyLimit;
+    expect(() =>
+      startOverrideSession(
+        permanentRule,
+        usage({ visitsUsed: 2 }),
+        intention,
+        now,
+      ),
+    ).toThrow("Permanent blocks do not have an emergency override");
+  });
+
   it("grants a ten-minute override session and reports active access", () => {
     const granted = startOverrideSession(
       limitedRule(),
