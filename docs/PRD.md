@@ -1,7 +1,7 @@
 # Visit Budget — PRD
 
 Status: active
-Last updated: 2026-08-05
+Last updated: 2026-08-21
 
 ## Launch announcement
 
@@ -56,7 +56,7 @@ checked sites during ordinary desktop browsing. Their core job is to turn an
 automatic re-entry into a conscious decision while retaining access when it is
 genuinely needed.
 
-## v0.1 scope (smallest shippable)
+## 1.0 scope
 
 - Per-site visit-limit and permanent-block rules with existing host/path
   matching, local-day reset, and optional daily locking.
@@ -68,7 +68,7 @@ genuinely needed.
 - Local-only rules, usage, challenge state, and enforcement; intention text is
   ephemeral.
 
-## User stories (v0.1)
+## User stories (1.0)
 
 US-1: As a user, I can enable tab-return counting for one rule so that revisiting
 that site through tab switching consumes my limited attention budget.
@@ -102,7 +102,7 @@ AC: Given any successful, failed, cancelled, or abandoned override attempt, the
 intention is absent from local storage, session storage, logs, and network
 requests.
 
-## Out of scope (v0.1)
+## Out of scope (1.0)
 
 - Overrides for permanent-block rules.
 - Saving, displaying, syncing, or analyzing written intentions.
@@ -119,7 +119,7 @@ requests.
 - Preventing uninstall, alternate-browser, or alternate-profile bypasses.
 
 Time measurement and a paid upgrade are deferred internal roadmap ideas, not
-part of the public v0.1 promise.
+part of the public 1.0 promise.
 
 ## Edge cases & states
 

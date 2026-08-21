@@ -1,44 +1,38 @@
 # Chrome Web Store submission guide
 
-This document prepares Visit Budget for a free Chrome Web Store listing. It is
-written to be copied into the Chrome Web Store Developer Dashboard, then updated
-with your real support/contact links before submission.
+This is the release checklist and copy deck for Visit Budget 1.0.0. Copy the
+relevant fields into the Chrome Web Store Developer Dashboard and keep every
+answer consistent with the uploaded build.
 
 Official references:
 
-- [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
-- [Register your developer account](https://developer.chrome.com/docs/webstore/register/)
-- [Publish in the Chrome Web Store](https://developer.chrome.google.cn/docs/webstore/publish?hl=en)
-- [Chrome Web Store Program Policies](https://developer.chrome.com/docs/webstore/program-policies/policies?hl=en)
+- [Create a strong store listing](https://developer.chrome.com/docs/webstore/best-listing)
+- [Listing information](https://developer.chrome.com/docs/webstore/cws-dashboard-listing)
+- [Privacy practices](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)
+- [User data policy](https://developer.chrome.com/docs/webstore/user_data)
 
-## Before upload
+## Release artifact
 
 Run:
 
 ```bash
+npm ci
 npm run check
+npm run test:e2e
 npm run package
 ```
 
 Upload:
 
 ```text
-artifacts/visit-budget-v0.1.0.zip
+artifacts/visit-budget-v1.0.0.zip
 ```
 
-Use an account email you will actually check. Google uses it for review,
-policy, and support notices.
+The packaging command builds without source maps, validates the manifest and
+bundle, rejects remote-code and network primitives, and writes a SHA-256 file
+beside the ZIP.
 
-## Recommended release path
-
-1. Submit as **Private** or **Unlisted** for a small beta.
-2. Test the reviewed store build on your own Chrome profile.
-3. Switch to **Public** once the listing, screenshots, and onboarding feel
-   polished.
-
-All visibility options go through review.
-
-## Store listing draft
+## Store listing copy
 
 ### Name
 
@@ -46,136 +40,109 @@ All visibility options go through review.
 Visit Budget
 ```
 
-### Short description
+### Summary
 
 ```text
-Limit daily website re-entries and block distracting sites with local-first deliberate friction.
+Pause automatic re-checking with daily website visit budgets, clear reminders, and private on-device blocking.
 ```
 
 ### Detailed description
 
 ```text
-Visit Budget helps turn automatic website re-checking into a conscious choice.
+Visit Budget helps you notice the moment a quick website check turns automatic.
 
-Set a daily visit budget for sites you tend to reopen on autopilot, or block selected sites completely. When a visit is used, Visit Budget shows a small reminder with the remaining count. Once a daily budget is exhausted, the next re-entry is blocked unless you use the site’s one daily emergency pass.
+Choose the websites that deserve more intention. Give a site a daily visit budget, block it completely, or enable stricter tab-return counting when switching away and back is part of the habit. Each counted entry shows a quiet reminder with the number of visits remaining.
 
-What it does:
-- Limit daily re-entries for chosen websites
-- Block selected websites completely
-- Show remaining visits after each counted entry
-- Preserve already-open pages beneath a blocking overlay
-- Offer one site-specific emergency pass per day for limited sites
-- Support subdomains, included paths, excluded paths, and optional daily locks
+Refreshes and navigation within the same configured site do not consume another visit. Once a budget is exhausted, Visit Budget pauses the next entry. If access is genuinely necessary, an emergency override remains available—but every attempt requires a 15-second wait, a private written intention of at least 50 characters, and exact entry of a fresh five-character code. A successful override lasts 10 minutes.
 
-What it does not claim:
-- It is deliberate friction, not an unbreakable lock
-- You can still uninstall the extension, use another browser, or use another Chrome profile
-- It does not replace self-control or device-level parental-control software
+Features:
+- Daily visit budgets for selected websites
+- Permanent blocks with no override
+- Optional counting when you return from another tab
+- Clear remaining-visit reminders
+- Subdomain, included-path, and excluded-path controls
+- Optional daily locks that defer rule changes until tomorrow
+- Protection for new navigations and already-open tabs
 
-Privacy:
-- No account
-- No backend
-- No analytics
-- No ads
+Private by design:
+- No account or backend
+- No analytics, ads, or telemetry
+- No remote code
 - No browsing data leaves your device
-- Rules and visit counts are stored locally in Chrome
+- Written override intentions are never saved or transmitted
+- Website access is requested only when you create a rule for that website
 
-Visit Budget asks for website access only when you create a rule for that website. That access is used to count visits, show reminders, preserve already-open tabs, and redirect blocked navigations before the destination page appears.
+Visit Budget provides deliberate friction, not an unbreakable lock. You can still uninstall it, use another browser or profile, or bypass Chrome-level enforcement. Its purpose is to interrupt an automatic habit long enough for you to make a conscious choice.
 ```
 
-### Category
+### Category and language
 
 ```text
 Productivity
-```
-
-### Language
-
-```text
 English
 ```
 
-### Support URL
-
-Use one of:
+### Homepage and support
 
 ```text
-https://github.com/YOUR_USERNAME/visit-budget/issues
+Homepage: https://tettinger.dev/
+Support: https://tettinger.dev/
 ```
 
-or:
+A dedicated Visit Budget support or privacy page can replace the general
+support URL later. Do not add a placeholder URL to the public listing.
 
-```text
-https://tettinger.dev/
-```
-
-### Homepage URL
-
-```text
-https://tettinger.dev/
-```
-
-If you later create a dedicated Visit Budget landing page, use that as the
-homepage URL and keep `https://tettinger.dev/` linked from the extension's
-options page.
-
-## Privacy tab draft
+## Privacy practices copy
 
 ### Single purpose
 
 ```text
-Visit Budget limits how many times a user can re-enter selected websites each day and can block selected websites, using only local rules and local daily usage state.
+Visit Budget limits re-entry to user-selected websites with daily visit budgets or permanent blocks, using rules and daily usage state stored only on the user's device.
 ```
 
-### Data collection
-
-Recommended answer:
+### Data use declaration
 
 ```text
-Visit Budget does not collect or transmit user data to the developer or any third party.
+Visit Budget does not collect, sell, or transmit user data to the developer or any third party. It observes navigation only as needed to enforce rules the user created. Rules and daily usage remain in Chrome storage on the device. Written override intentions are processed temporarily in the blocked interface and are never stored, logged, or transmitted.
 ```
 
-The extension stores user-created rules and daily usage counts locally in
-Chrome storage on the user’s device. If the dashboard asks whether the extension
-handles website content or browsing activity, be precise: it observes
-navigations for configured sites so it can enforce rules, but it does not send
-that information anywhere.
+Answer **No** to remote code. The package contains all executable code, uses a
+self-only content security policy, and does not download or evaluate code.
 
-### Privacy policy URL
-
-Host `docs/privacy-policy.md` as a public webpage before submitting. Good
-low-friction options:
-
-- GitHub Pages
-- A simple page on your personal website
-- A public repository page if it renders clearly and stays available
+Host `docs/privacy-policy.md` as a stable public webpage before submission. A
+clear path such as `https://tettinger.dev/visit-budget/privacy/` would work once
+it actually exists; do not enter that URL until it is live.
 
 ## Permission justifications
 
-Use concise, direct explanations.
+### `activeTab`
+
+```text
+Reads the current tab only when the user opens Visit Budget or starts quick-add, so the popup can show that site's status and prefill a rule. It does not provide continuous browsing access.
+```
 
 ### `storage`
 
 ```text
-Stores website rules, local daily visit counts, emergency-pass state, and pending locked changes on the user’s device.
+Stores website rules, local daily visit counts, pending daily-lock changes, and short-lived override confirmation state on the user's device.
 ```
 
 ### `webNavigation`
 
 ```text
-Detects when the user enters, refreshes, or navigates within configured websites so Visit Budget can count re-entries accurately without counting refreshes as new visits.
+Distinguishes entering a configured website from refreshing it or navigating within it, so Visit Budget counts re-entries accurately.
 ```
 
 ### `scripting`
 
 ```text
-Injects the page guard into configured websites so already-open tabs can show remaining-visit reminders or a blocking overlay without destroying page contents.
+Installs the guard on configured websites so already-open tabs can show visit reminders or a page-preserving blocking overlay.
 ```
 
 ### `alarms`
 
 ```text
-Schedules local maintenance for daily resets and emergency-pass expiration.
+Schedules local maintenance for midnight resets and expired temporary sessions.
 ```
 
 ### `declarativeNetRequestWithHostAccess`
@@ -187,88 +154,56 @@ Redirects blocked future navigations for configured websites before the destinat
 ### Optional host permissions
 
 ```text
-Requested only when the user creates a rule for a specific website. Host access is required to count visits, show reminders, guard already-open tabs, and redirect blocked navigations for that website.
+Requested only after the user creates a rule for a specific website. Host access is required to count visits, show reminders, guard already-open tabs, and redirect blocked navigations for that website. Access is released when the final rule requiring that host is removed.
 ```
 
-## Support / donation link
-
-Recommended approach: keep the extension free and include one quiet optional
-support link.
-
-Good copy:
+## Review instructions
 
 ```text
-Visit Budget is free. If it helps you, you can optionally support development.
+Visit Budget has no account or backend.
+
+To test a visit limit:
+1. Open the options page and add a rule for a test website with a daily limit of 1.
+2. Allow Chrome's site-access request.
+3. Visit the website once, navigate to a different website, and return.
+4. Confirm the blocked page appears.
+5. To test an override, wait 15 seconds, enter at least 50 characters, continue, and type the displayed five-character code exactly.
+
+To test a permanent block, create a permanent-block rule and visit its website. No override controls should appear.
+
+All rules and usage counts are stored locally in chrome.storage. The written override intention is never stored or transmitted.
 ```
 
-Use:
+## Listing assets
 
-- Buy Me a Coffee
-- Ko-fi
-- GitHub Sponsors
-- A personal website support page
+Prepare clean, current screenshots that show:
 
-Avoid:
+- Settings with one example daily budget.
+- The in-product explanation shown before Chrome requests website access.
+- A remaining-visit reminder.
+- The exhausted-budget page and intention step.
+- The separate code-confirmation dialog.
 
-- Ads inside blocked pages or reminders
-- Affiliate redirects
-- Injecting affiliate codes
-- Any support message that appears while a user is blocked or frustrated
+Use fictional or local test sites. Do not expose personal email, private tabs,
+real browsing history, or third-party account content. Use the generated
+128-pixel product icon from `public/icons/icon-128.png`; create any promotional
+images at the exact sizes requested by the current dashboard.
 
-The options page currently links to Antal “Tony” Tettinger's homepage. If you
-later want a direct support link, prefer putting it on that homepage. If you
-decide to add a second in-extension link, keep it quiet and non-blocking:
+## Support and monetization
 
-```html
-<a
-  class="text-button"
-  href="https://buymeacoffee.com/YOUR_USERNAME"
-  target="_blank"
-  rel="noreferrer"
-  >Support development</a
->
-```
-
-If you add `target="_blank"` in extension HTML, test it manually from the
-options page before submission.
-
-## Screenshot checklist
-
-Prepare screenshots that show function, not hype:
-
-- Settings page with one limited site
-- Permission context dialog explaining website access
-- Top-right “Visit 1 of 3” reminder
-- Blocked page after a budget is used
-- Emergency-pass pause and intention field
-
-Avoid screenshots containing personal email, private tabs, real browsing
-history, or copyrighted third-party page content.
-
-## Review notes for Google
-
-Paste this into the test instructions if the dashboard offers a field:
-
-```text
-Visit Budget has no account or backend. To test:
-1. Install the extension.
-2. Open the options page.
-3. Add a rule for a test website with a daily limit of 1.
-4. Visit that website once.
-5. Navigate to another website.
-6. Return to the limited website and verify that the blocked page appears.
-
-Host permission is requested only when a rule is created for a website. All rules and daily usage counts are stored locally in chrome.storage.
-```
+Keep support optional and away from blocking moments. The extension links
+quietly to Antal “Tony” Tettinger's homepage. A Buy Me a Coffee or similar link
+can live there without adding pressure, affiliate redirects, or unrelated data
+collection inside the extension.
 
 ## Final pre-submit checklist
 
-- `npm run check` passes.
-- `npm run test:e2e` passes.
-- `npm run package` creates the ZIP.
-- Manifest version is bumped if this is an update.
-- Privacy policy is hosted at a stable public URL.
-- Store listing does not overclaim enforcement.
-- Screenshots are clean and current.
-- Donation/support link is optional, non-intrusive, and not shown as required.
-- No placeholder URLs remain in public listing metadata.
+- The ZIP and `.sha256` file were produced by `npm run package`.
+- `npm audit`, `npm run check`, and `npm run test:e2e` pass.
+- The hosted privacy-policy URL opens publicly without a login.
+- Store privacy answers match the declarations above.
+- Screenshots match version 1.0.0 and contain no personal information.
+- The publisher trader/non-trader declaration is accurate for the publisher's
+  real circumstances.
+- The listing does not claim that the extension is impossible to bypass.
+- No placeholder URL or unpublished privacy URL remains.

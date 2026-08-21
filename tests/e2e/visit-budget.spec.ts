@@ -80,7 +80,7 @@ test("limits re-entry and grants a private override session", async () => {
     );
     await expect(
       page.getByRole("heading", {
-        name: "Your visit budget is used for today",
+        name: "You've used today's visit budget",
       }),
     ).toBeVisible();
 
@@ -402,7 +402,7 @@ test("shows one durable progress receipt for each consumed entry", async () => {
     );
     await expect(
       page.getByRole("heading", {
-        name: "Your visit budget is used for today",
+        name: "You've used today's visit budget",
       }),
     ).toBeVisible();
   });

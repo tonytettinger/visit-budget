@@ -1,6 +1,6 @@
 {
   "name": "visit-budget",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "A local-first Chrome extension for daily website visit budgets.",
@@ -11,7 +11,7 @@
     "format:check": "prettier --check . --ignore-unknown",
     "icons": "node scripts/generate-icons.mjs",
     "lint": "eslint .",
-    "package": "npm run build && node scripts/package.mjs",
+    "package": "node scripts/build.mjs --production && node scripts/package.mjs && node scripts/validate-release.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",

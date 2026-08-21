@@ -123,6 +123,25 @@ export function urlMatchesRule(urlValue: string, rule: SiteRule): boolean {
   );
 }
 
+export function safeBlockedTarget(
+  targetValue: string | undefined,
+  rule: SiteRule,
+): string {
+  const fallback = `https://${rule.hostname}/`;
+  if (!targetValue || !urlMatchesRule(targetValue, rule)) {
+    return fallback;
+  }
+
+  try {
+    const target = new URL(targetValue);
+    return ["http:", "https:"].includes(target.protocol)
+      ? target.toString()
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function findMatchingRule(
   urlValue: string,
   rules: readonly SiteRule[],

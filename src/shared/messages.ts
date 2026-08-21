@@ -104,8 +104,73 @@ export interface GuardUpdate {
 }
 
 export function isClientRequest(value: unknown): value is ClientRequest {
-  if (!value || typeof value !== "object" || !("type" in value)) {
+  if (!isRecord(value) || typeof value.type !== "string") {
     return false;
   }
-  return typeof value.type === "string";
+  switch (value.type) {
+    case "GET_STATE":
+    case "OPEN_FRESH_TAB":
+      return true;
+    case "GET_CURRENT_SITE":
+      return (
+        value.tabId === undefined ||
+        (typeof value.tabId === "number" && Number.isInteger(value.tabId))
+      );
+    case "GET_PAGE_CONTEXT":
+      return typeof value.url === "string";
+    case "GET_BLOCKED_CONTEXT":
+    case "DELETE_RULE":
+    case "CANCEL_PENDING_CHANGE":
+    case "CANCEL_OVERRIDE_CONFIRMATION":
+      return typeof value.ruleId === "string";
+    case "SAVE_RULE":
+      return isSiteRule(value.rule);
+    case "START_OVERRIDE_CONFIRMATION":
+      return isOverrideRequest(value);
+    case "CONFIRM_OVERRIDE":
+      return (
+        isOverrideRequest(value) &&
+        typeof value.code === "string" &&
+        value.code.length === 5
+      );
+    default:
+      return false;
+  }
+}
+
+function isOverrideRequest(value: Record<string, unknown>): boolean {
+  return (
+    typeof value.ruleId === "string" &&
+    typeof value.intention === "string" &&
+    value.intention.length <= 240
+  );
+}
+
+function isSiteRule(value: unknown): value is SiteRule {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.id === "string" &&
+    typeof value.hostname === "string" &&
+    typeof value.includeSubdomains === "boolean" &&
+    isStringArray(value.includePathPrefixes) &&
+    isStringArray(value.excludePathPrefixes) &&
+    (value.mode === "visit-limit" || value.mode === "permanent-block") &&
+    (value.dailyLimit === undefined ||
+      (typeof value.dailyLimit === "number" &&
+        Number.isInteger(value.dailyLimit))) &&
+    typeof value.countTabReturns === "boolean" &&
+    typeof value.dailyLockEnabled === "boolean"
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
 }

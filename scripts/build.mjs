@@ -5,6 +5,7 @@ import { build } from "esbuild";
 const root = path.resolve(import.meta.dirname, "..");
 const outputDirectory = path.join(root, "dist");
 const fixedTime = new Date("2000-01-01T00:00:00.000Z");
+const production = process.argv.includes("--production");
 
 await rm(outputDirectory, { force: true, recursive: true });
 await mkdir(outputDirectory, { recursive: true });
@@ -25,7 +26,7 @@ await build({
   minify: false,
   outdir: outputDirectory,
   platform: "browser",
-  sourcemap: true,
+  sourcemap: !production,
   target: "chrome120",
 });
 

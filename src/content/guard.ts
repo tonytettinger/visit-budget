@@ -209,7 +209,7 @@ function renderGate(
   const title = requiredElement<HTMLElement>(shadow, "h1");
   title.textContent = isPermanent
     ? "This website is blocked"
-    : "Your visit budget is used for today";
+    : "You've used today's visit budget";
   requiredElement<HTMLElement>(shadow, ".site").textContent =
     context.rule.hostname;
   requiredElement<HTMLElement>(shadow, ".reset").textContent =
@@ -234,9 +234,9 @@ function renderOverrideForm(
   context: Extract<BlockedContext, { kind: "active-block" }>,
 ): void {
   area.innerHTML = `
-    <p class="pass-note">A 10-minute emergency override is available. Pause for 15 seconds, then describe what you intend to do in at least 50 characters.</p>
+    <p class="pass-note">Need access anyway? Pause for 15 seconds, then describe what you intend to do in at least 50 characters. A confirmed override lasts 10 minutes.</p>
     <label for="visit-budget-intention">What do you intend to do?</label>
-    <textarea id="visit-budget-intention" maxlength="240" inputmode="text" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="For example: check one email, then leave"></textarea>
+    <textarea id="visit-budget-intention" maxlength="240" inputmode="text" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="For example: reply to one email, then leave"></textarea>
     <div class="intention-meta"><span>Your intention is not saved.</span><span class="intention-count">0 / 50</span></div>
     <div class="actions" style="margin-top: 10px">
       <button class="secondary override" type="button" disabled></button>

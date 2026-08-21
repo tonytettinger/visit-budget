@@ -39,7 +39,7 @@ script and drift check rather than maintaining two editable copies.
 
 Typography uses the system sans-serif stack already declared in
 `public/styles.css`. Spacing follows the existing roughly 4/8px rhythm. The
-product remains light-first in v0.1; dark mode is not part of this feature.
+product remains light-first in 1.0; dark mode is not part of this feature.
 
 ## Layout
 

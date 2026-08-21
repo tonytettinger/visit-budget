@@ -1,11 +1,14 @@
-import { mkdir, readdir, rm } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const root = path.resolve(import.meta.dirname, "..");
 const dist = path.join(root, "dist");
 const artifacts = path.join(root, "artifacts");
-const archive = path.join(artifacts, "visit-budget-v0.1.0.zip");
+const manifest = JSON.parse(
+  await readFile(path.join(dist, "manifest.json"), "utf8"),
+);
+const archive = path.join(artifacts, `visit-budget-v${manifest.version}.zip`);
 
 async function listFiles(directory, prefix = "") {
   const entries = await readdir(directory, { withFileTypes: true });

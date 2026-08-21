@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Visit Budget",
-  "version": "0.1.0",
-  "description": "Set daily website visit budgets and permanent blocks.",
+  "version": "1.0.0",
+  "description": "Make automatic website re-checking a conscious choice with daily visit budgets and private, local-only blocking.",
   "minimum_chrome_version": "120",
   "permissions": [
     "activeTab",
@@ -41,7 +41,7 @@
         "styles.css",
         "icons/icon-48.png"
       ],
-      "matches": ["<all_urls>"]
+      "matches": ["http://*/*", "https://*/*"]
     }
   ],
   "content_security_policy": {

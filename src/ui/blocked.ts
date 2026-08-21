@@ -1,4 +1,6 @@
 import { MINIMUM_INTENTION_LENGTH } from "../core/engine";
+import { safeBlockedTarget } from "../core/rules";
+import type { SiteRule } from "../core/types";
 import type {
   BlockedContext,
   OverrideConfirmationResult,
@@ -56,8 +58,8 @@ async function load(): Promise<void> {
       renderStaleRule();
       return;
     }
-    if (context.status.kind === "override-session" && originalTarget) {
-      location.replace(originalTarget);
+    if (context.status.kind === "override-session") {
+      location.replace(targetForRule(context.rule));
       return;
     }
     render(context);
@@ -72,7 +74,7 @@ function render(
   const isPermanent = value.status.kind === "permanently-blocked";
   requiredElement<HTMLElement>("#blocked-title").textContent = isPermanent
     ? "This website is blocked"
-    : "Your visit budget is used for today";
+    : "You've used today's visit budget";
   requiredElement<HTMLElement>("#blocked-site").textContent =
     value.rule.hostname;
   requiredElement<HTMLElement>("#blocked-reset").textContent =
@@ -177,7 +179,7 @@ async function confirmOverride(): Promise<void> {
       intention: requiredElement<HTMLTextAreaElement>("#intention").value,
       code: requiredElement<HTMLInputElement>("#confirmation-code").value,
     });
-    location.replace(originalTarget || `https://${context.rule.hostname}/`);
+    location.replace(targetForRule(context.rule));
   } catch (error) {
     renderConfirmationError(errorMessage(error));
     button.disabled = false;
@@ -207,4 +209,8 @@ function renderError(message: string): void {
 
 function renderConfirmationError(message: string): void {
   requiredElement<HTMLElement>("#confirmation-error").textContent = message;
+}
+
+function targetForRule(rule: SiteRule): string {
+  return safeBlockedTarget(originalTarget, rule);
 }

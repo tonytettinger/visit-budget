@@ -21,10 +21,11 @@ to replace self-control.
   match that same effective rule. Even an immediate return counts.
 - **Tab-return counting:** An optional per-rule setting that also counts
   returning to a matching tab after any other tab was active.
-- **Permanent block:** A rule that never allows entry and has no emergency
-  pass.
-- **Emergency pass:** One site-specific, 10-minute exception per local calendar
-  day. It requires a 15-second pause and a non-empty written intention.
+- **Permanent block:** A rule that never allows entry and cannot be overridden.
+- **Emergency override:** A repeatable, 10-minute exception for a limited site.
+  Every override requires a 15-second pause, a private written intention of at
+  least 50 characters, and exact entry of a fresh five-character code in a
+  separate confirmation dialog.
 - **Daily lock:** An optional commitment that keeps a rule unchanged until the
   next local-day reset. Edits or removal are scheduled for tomorrow.
 
@@ -42,7 +43,7 @@ to replace self-control.
 | Create a rule while its matching site is active   | Yes               |
 
 The first `N` visits are allowed. Entry `N + 1` is blocked. An allowed visit is
-not time-limited; the emergency pass is.
+not time-limited; an emergency override is.
 
 ### Matching behavior
 
@@ -59,9 +60,10 @@ not time-limited; the emergency pass is.
 
 ### Daily reset and locks
 
-Usage and emergency-pass availability reset at local midnight. Correctness does
-not depend on Chrome firing an alarm at exactly midnight: every read and
-transition also checks the local date lazily.
+Usage resets at local midnight. Correctness does not depend on Chrome firing an
+alarm at exactly midnight: every read and transition also checks the local date
+lazily. Emergency overrides expire after 10 minutes and do not reset or add to
+the daily visit budget.
 
 When daily lock is enabled, the current rule remains effective through the day.
 A replacement or deletion is stored as a pending change and applied after the
@@ -71,15 +73,19 @@ current locked rule.
 ## Privacy and permissions
 
 Visit Budget has no account, server, telemetry, advertising, or remote code.
-Rules and daily usage remain in `chrome.storage.local` on the device.
+Rules and daily usage remain in `chrome.storage.local` on the device. Override
+confirmation state is temporary, and the written intention is never persisted,
+logged, or transmitted.
 
 The extension requests:
 
-- `storage` for rules, usage, pending changes, and active-session state.
+- `activeTab` for reading the current page only when you open the toolbar popup
+  or start quick-add.
+- `storage` for rules, usage, pending changes, and temporary override state.
 - `webNavigation` to distinguish reloads/internal navigation from re-entry,
   including single-page applications.
 - `scripting` to guard configured sites and already-open tabs.
-- `alarms` for midnight and emergency-pass maintenance.
+- `alarms` for local midnight and expired-session maintenance.
 - `declarativeNetRequestWithHostAccess` to redirect blocked future
   navigations before the destination page is shown.
 
@@ -100,7 +106,8 @@ V1 includes:
 - Optional per-rule tab-return counting.
 - Domain, subdomain, included-path, and excluded-path matching.
 - Existing-tab protection.
-- One emergency pass per limited site per day.
+- Repeatable emergency overrides with a full pause, private intention, and code
+  confirmation every time.
 - Optional daily rule locks.
 - A toolbar popup, options page, blocked page, page-preserving overlay, and
   durable visit-receipt notification with circular daily progress.
@@ -117,9 +124,9 @@ V1 intentionally excludes:
 - Accounts, cloud services, analytics, or AI.
 - Time-spent limits and historical usage dashboards.
 - OS-, router-, or enterprise-level enforcement.
-- Chrome Web Store publication. Submission materials are prepared in
-  `docs/chrome-web-store-submission.md`, but the extension has not been
-  published yet.
+- Chrome Web Store publication itself. Version 1.0.0 is prepared for submission,
+  but publication still requires a hosted privacy policy, listing assets, and
+  review in the Chrome Web Store Developer Dashboard.
 
 ## Acceptance criteria
 
@@ -137,7 +144,12 @@ V1 intentionally excludes:
 - “Leave for now” exits a newly blocked navigation without returning to the
   blocked URL.
 - A blocked overlay preserves the underlying page and unsaved form contents.
-- Emergency access lasts 10 minutes and is available once per site per day.
+- Every successful emergency override lasts exactly 10 minutes; expired access
+  requires the complete friction flow again.
+- Wrong, cancelled, expired, or manually altered override confirmations fail
+  closed and grant no access.
+- Written intentions never enter local storage, session storage, logs, or
+  network requests.
 - Local-midnight reset and queued locked changes work after browser sleep or
   service-worker restart.
 - No user browsing data is transmitted off-device.
@@ -174,7 +186,7 @@ npm run package     # Create a deterministic ZIP in artifacts/
 Visit Budget can be submitted as a free Chrome Web Store extension after you
 create a developer account and fill out the listing, privacy, and distribution
 fields. The prepared submission guide is in
-`docs/chrome-web-store-submission.md`, and the privacy-policy draft is in
+`docs/chrome-web-store-submission.md`, and the privacy policy source is in
 `docs/privacy-policy.md`.
 
 Keep any support or donation link optional and quiet. The options page links to

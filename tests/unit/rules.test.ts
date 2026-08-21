@@ -4,6 +4,7 @@ import {
   normalizePathPrefix,
   parseRuleTarget,
   permissionOriginsForRule,
+  safeBlockedTarget,
   urlMatchesRule,
 } from "../../src/core/rules";
 import type { SiteRule } from "../../src/core/types";
@@ -113,5 +114,20 @@ describe("rule matching", () => {
       "http://*.example.com/*",
       "https://*.example.com/*",
     ]);
+  });
+
+  it("returns only a matching HTTP target from a blocked-page URL", () => {
+    expect(
+      safeBlockedTarget(
+        "https://mail.example.com/inbox?message=1#reply",
+        rule(),
+      ),
+    ).toBe("https://mail.example.com/inbox?message=1#reply");
+    expect(safeBlockedTarget("https://attacker.test/", rule())).toBe(
+      "https://example.com/",
+    );
+    expect(safeBlockedTarget("javascript:alert(1)", rule())).toBe(
+      "https://example.com/",
+    );
   });
 });

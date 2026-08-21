@@ -27,6 +27,9 @@ let quickAddActive =
 let selectedRuleId: string | undefined = pageParams.get("rule") ?? undefined;
 let toastTimer: number | undefined;
 
+requiredElement<HTMLElement>("#extension-version").textContent =
+  `Visit Budget ${chrome.runtime.getManifest().version}`;
+
 const form = requiredElement<HTMLFormElement>("#rule-form");
 const mode = requiredElement<HTMLSelectElement>("#mode");
 const website = requiredElement<HTMLInputElement>("#website");

@@ -1,6 +1,6 @@
 # Plan: Deliberate friction controls
 
-PRD: `docs/PRD.md` §v0.1 scope
+PRD: `docs/PRD.md` §1.0 scope
 
 Architecture impact: none; extends the existing core → platform → UI flow
 
@@ -57,7 +57,7 @@ Checkpoint: no
 
 ## Phase 3 — Code-confirmation interface
 
-Status: done · 2026-08-21
+Status: done · 2026-08-21 · `9761363`
 
 Checkpoint: no — moved to Phase 4 so the completed override flow, security audit,
 and 1.0 release copy can be reviewed as one honest release candidate
@@ -79,7 +79,7 @@ and 1.0 release copy can be reviewed as one honest release candidate
 
 ## Phase 4 — Contract, privacy, and release hardening
 
-Status: todo
+Status: done · 2026-08-21
 
 Checkpoint: yes — the unpacked extension and deterministic ZIP are ready for
 manual Chrome review
@@ -89,14 +89,17 @@ manual Chrome review
   paths; remediate dependency findings; set version 1.0.0; run complete
   automated and live verification; rebuild the deterministic package.
 - Stories: US-1, US-2, US-3, US-4, US-5
-- Files: `README.md`, `CHANGELOG.md`, `docs/chrome-web-store-submission.md`,
+- Files: `README.md`, `docs/chrome-web-store-submission.md`,
   `docs/privacy-policy.md`, `docs/security-review.md`, `docs/PRD.md`,
-  `docs/GLOSSARY.md`, `docs/ROADMAP.md`, `docs/deploys.log`,
+  `docs/DESIGN.md`,
   `docs/plans/deliberate-friction-controls/plan.md`, `package.json`,
-  `package-lock.json`, `public/manifest.json`, `public/options.html`,
-  `src/ui/options.ts`, `scripts/`, `artifacts/`
-- Test: `npm audit`, `npm run check`, `npm run test:e2e`,
-  `npm run package`, release-artifact inspection, plus live Chrome journeys for
-  both counting modes and the full override flow
+  `package-lock.json`, `eslint.config.js`, `public/blocked.html`,
+  `public/manifest.json`, `public/options.html`, `src/content/guard.ts`,
+  `src/core/rules.ts`, `src/shared/messages.ts`, `src/ui/blocked.ts`,
+  `src/ui/options.ts`, `tests/unit/messages.test.ts`,
+  `tests/unit/rules.test.ts`, `tests/e2e/visit-budget.spec.ts`, `scripts/`,
+  `.github/workflows/check.yml`, `artifacts/`
+- Test: `npm audit`, `npm run check`, `npm run test:e2e`, `npm run package`,
+  repeat-build checksum comparison, and release-artifact inspection
 - Commit: `chore: prepare Visit Budget 1.0.0`
 - Rollback: revert; generated ZIP can be recreated from the previous commit
