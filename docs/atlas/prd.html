@@ -1,2 +1,141 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>PRD — Visit Budget Atlas</title><link rel="stylesheet" href="atlas.css" /></head><body><div class="wrap"><div class="topbar"><a class="brand" href="index.html">← Visit Budget Atlas</a><nav class="toc"><a href="#scope">Scope</a><a href="#stories">Stories</a><a href="#limits">Limits</a></nav><button class="theme-toggle" type="button">● dark</button></div><header class="masthead"><div class="eyebrow">Product requirements · docs/PRD.md</div><h1>Product requirements</h1><p>Visit Budget gives a site one clear daily boundary without pretending to be an unbreakable lock.</p></header><section id="scope"><div class="sec-head"><h2>Current scope</h2><span class="stamp">2026-09-13</span></div><!-- BEGIN:content --><div class="prose"><p>People can choose one per-site daily boundary: visits, active time, or a permanent block. Active time counts only while a matching tab is selected in focused Chrome. An exhausted limited site offers a 15-second pause, a 5–60 minute duration choice, and exact entry of a random five-character code.</p><p>Everything stays on the device. The extension does not claim to replace self-control: people can still uninstall it or use another browser or profile.</p></div><div class="scope-cols"><div><h3>In scope</h3><ul><li>Visit budgets, time budgets, and permanent blocks.</li><li>Optional visit-only tab-return counting.</li><li>Repeatable, bounded emergency overrides.</li><li>Local-only rules, usage, and challenge state.</li></ul></div><div><h3>Out of scope</h3><ul><li>Overrides for permanent blocks.</li><li>Saved or analysed free-form override reasons.</li><li>Time reports, attention monitoring, or productivity scoring.</li><li>Accounts, sync, analytics, advertising, or paid plans.</li></ul></div></div></section><section id="stories"><div class="sec-head"><h2>Key user stories</h2><span class="stamp">2026-09-13</span></div><table><thead><tr><th>Story</th><th>Observable result</th></tr></thead><tbody><tr><td>US-1 / US-2</td><td>Tab-return counting is opt-in; refreshes, same-rule navigation, and browser focus return do not consume a visit.</td></tr><tr><td>US-3</td><td>Active time decreases only for a matching selected tab in focused Chrome.</td></tr><tr><td>US-4 / US-5</td><td>After a 15-second pause, an exhausted visit or time budget can grant only the chosen duration after exact code confirmation.</td></tr><tr><td>US-6</td><td>No free-form personal text, page content, or browsing data is collected or transmitted.</td></tr></tbody></table></section><section id="limits"><div class="sec-head"><h2>Edge states and kill criteria</h2><span class="stamp">2026-09-13</span></div><div class="panel"><ul><li>Moving between visit and time budgets takes effect at the next local midnight, so it cannot reset today's allowance.</li><li>Every override starts a fresh 15-second pause; permanent blocks never offer one.</li><li>Missing or expired challenge state fails closed.</li><li>Park time budgets if their focused-tab boundary feels confusing or like surveillance rather than a personal guardrail.</li></ul></div><!-- END:content --></section></div><script src="atlas.js"></script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PRD — Visit Budget Atlas</title>
+    <link rel="stylesheet" href="atlas.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <a class="brand" href="index.html">← Visit Budget Atlas</a>
+        <nav class="toc">
+          <a href="#scope">Scope</a><a href="#stories">Stories</a
+          ><a href="#limits">Limits</a>
+        </nav>
+        <button class="theme-toggle" type="button">● dark</button>
+      </div>
+      <header class="masthead">
+        <div class="eyebrow">Product requirements · docs/PRD.md</div>
+        <h1>Product requirements</h1>
+        <p>
+          Visit Budget gives a site one clear daily boundary without pretending
+          to be an unbreakable lock.
+        </p>
+      </header>
+      <section id="scope">
+        <div class="sec-head">
+          <h2>Current scope</h2>
+          <span class="stamp">2026-09-13</span>
+        </div>
+        <!-- BEGIN:content -->
+        <div class="prose">
+          <p>
+            People can choose one per-site daily boundary: visits, active time,
+            or a permanent block. Active time counts only while a matching tab
+            is selected in focused Chrome. An exhausted limited site offers a
+            15-second pause, a 5–60 minute duration choice, and exact entry of a
+            random five-character code.
+          </p>
+          <p>
+            Everything stays on the device. The extension does not claim to
+            replace self-control: people can still uninstall it or use another
+            browser or profile.
+          </p>
+        </div>
+        <div class="scope-cols">
+          <div>
+            <h3>In scope</h3>
+            <ul>
+              <li>Visit budgets, time budgets, and permanent blocks.</li>
+              <li>Optional visit-only tab-return counting.</li>
+              <li>Repeatable, bounded emergency overrides.</li>
+              <li>Local-only rules, usage, and challenge state.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Out of scope</h3>
+            <ul>
+              <li>Overrides for permanent blocks.</li>
+              <li>Saved or analysed free-form override reasons.</li>
+              <li>
+                Time reports, attention monitoring, or productivity scoring.
+              </li>
+              <li>Accounts, sync, analytics, advertising, or paid plans.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section id="stories">
+        <div class="sec-head">
+          <h2>Key user stories</h2>
+          <span class="stamp">2026-09-13</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Story</th>
+              <th>Observable result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>US-1 / US-2</td>
+              <td>
+                Tab-return counting is opt-in; refreshes, same-rule navigation,
+                and browser focus return do not consume a visit.
+              </td>
+            </tr>
+            <tr>
+              <td>US-3</td>
+              <td>
+                Active time decreases only for a matching selected tab in
+                focused Chrome.
+              </td>
+            </tr>
+            <tr>
+              <td>US-4 / US-5</td>
+              <td>
+                After a 15-second pause, an exhausted visit or time budget can
+                grant only the chosen duration after exact code confirmation.
+              </td>
+            </tr>
+            <tr>
+              <td>US-6</td>
+              <td>
+                No free-form personal text, page content, or browsing data is
+                collected or transmitted.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section id="limits">
+        <div class="sec-head">
+          <h2>Edge states and kill criteria</h2>
+          <span class="stamp">2026-09-13</span>
+        </div>
+        <div class="panel">
+          <ul>
+            <li>
+              Moving between visit and time budgets takes effect at the next
+              local midnight, so it cannot reset today's allowance.
+            </li>
+            <li>
+              Every override starts a fresh 15-second pause; permanent blocks
+              never offer one.
+            </li>
+            <li>Missing or expired challenge state fails closed.</li>
+            <li>
+              Park time budgets if their focused-tab boundary feels confusing or
+              like surveillance rather than a personal guardrail.
+            </li>
+          </ul>
+        </div>
+        <!-- END:content -->
+      </section>
+    </div>
+    <script src="atlas.js"></script>
+  </body>
+</html>

@@ -1,2 +1,111 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Glossary — Visit Budget Atlas</title><link rel="stylesheet" href="atlas.css" /></head><body><div class="wrap"><div class="topbar"><a class="brand" href="index.html">← Visit Budget Atlas</a><nav class="toc"><a href="#rules">Rules</a><a href="#access">Deliberate access</a></nav><button class="theme-toggle" type="button">● dark</button></div><header class="masthead"><div class="eyebrow">Ubiquitous language · docs/GLOSSARY.md</div><h1>Glossary</h1><p>One product term for each durable concept.</p></header><section id="rules"><div class="sec-head"><h2>Rules and counting</h2><span class="stamp">2026-09-13</span></div><!-- BEGIN:content --><dl class="kv"><dt>Rule</dt><dd>A hostname and optional path scope configured as a daily visit budget, daily time budget, or permanent block. Code: <code>src/core/types.ts</code>.</dd><dt>Visit</dt><dd>One counted entry into a visit-limit rule. The first N visits are allowed and entry N + 1 is blocked.</dd><dt>Re-entry</dt><dd>Returning to a rule after viewing a page that does not match that same effective rule.</dd><dt>Tab-return counting</dt><dd>A default-off visit-rule setting that also counts activation of a matching tab after any different tab was active. It never makes refresh, same-rule navigation, or browser-focus return count.</dd><dt>Active time</dt><dd>Time counted only while a rule-matching tab is selected in focused Chrome. It is not an estimate of typing, mouse movement, reading, or attention.</dd><dt>Time budget</dt><dd>A per-rule daily allowance of active time, set instead of a visit budget. Changing between the two takes effect at the next local midnight.</dd><dt>Permanent block</dt><dd>A rule that denies every matching entry and never offers an emergency override.</dd></dl></section><section id="access"><div class="sec-head"><h2>Deliberate access</h2><span class="stamp">2026-09-13</span></div><dl class="kv"><dt>Emergency override</dt><dd>A repeatable high-friction path through an exhausted visit- or time-budget rule. It requires a 15-second pause, a 5–60 minute duration choice in five-minute steps, and exact entry of a random five-character code.</dd><dt>Override duration</dt><dd>The temporary access length chosen for one emergency override. It is not a rule setting or saved preference; it becomes the local expiry of that one override session.</dd><dt>Override challenge</dt><dd>The temporary, fail-closed state containing the pause deadline and expected confirmation code.</dd><dt>Override session</dt><dd>The 5–60 minute access window created by a successful override challenge.</dd><dt>Daily lock</dt><dd>An optional commitment that keeps a rule unchanged until the next local-day reset.</dd></dl><!-- END:content --></section></div><script src="atlas.js"></script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glossary — Visit Budget Atlas</title>
+    <link rel="stylesheet" href="atlas.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <a class="brand" href="index.html">← Visit Budget Atlas</a>
+        <nav class="toc">
+          <a href="#rules">Rules</a><a href="#access">Deliberate access</a>
+        </nav>
+        <button class="theme-toggle" type="button">● dark</button>
+      </div>
+      <header class="masthead">
+        <div class="eyebrow">Ubiquitous language · docs/GLOSSARY.md</div>
+        <h1>Glossary</h1>
+        <p>One product term for each durable concept.</p>
+      </header>
+      <section id="rules">
+        <div class="sec-head">
+          <h2>Rules and counting</h2>
+          <span class="stamp">2026-09-13</span>
+        </div>
+        <!-- BEGIN:content -->
+        <dl class="kv">
+          <dt>Rule</dt>
+          <dd>
+            A hostname and optional path scope configured as a daily visit
+            budget, daily time budget, or permanent block. Code:
+            <code>src/core/types.ts</code>.
+          </dd>
+          <dt>Visit</dt>
+          <dd>
+            One counted entry into a visit-limit rule. The first N visits are
+            allowed and entry N + 1 is blocked.
+          </dd>
+          <dt>Re-entry</dt>
+          <dd>
+            Returning to a rule after viewing a page that does not match that
+            same effective rule.
+          </dd>
+          <dt>Tab-return counting</dt>
+          <dd>
+            A default-off visit-rule setting that also counts activation of a
+            matching tab after any different tab was active. It never makes
+            refresh, same-rule navigation, or browser-focus return count.
+          </dd>
+          <dt>Active time</dt>
+          <dd>
+            Time counted only while a rule-matching tab is selected in focused
+            Chrome. It is not an estimate of typing, mouse movement, reading, or
+            attention.
+          </dd>
+          <dt>Time budget</dt>
+          <dd>
+            A per-rule daily allowance of active time, set instead of a visit
+            budget. Changing between the two takes effect at the next local
+            midnight.
+          </dd>
+          <dt>Permanent block</dt>
+          <dd>
+            A rule that denies every matching entry and never offers an
+            emergency override.
+          </dd>
+        </dl>
+      </section>
+      <section id="access">
+        <div class="sec-head">
+          <h2>Deliberate access</h2>
+          <span class="stamp">2026-09-13</span>
+        </div>
+        <dl class="kv">
+          <dt>Emergency override</dt>
+          <dd>
+            A repeatable high-friction path through an exhausted visit- or
+            time-budget rule. It requires a 15-second pause, a 5–60 minute
+            duration choice in five-minute steps, and exact entry of a random
+            five-character code.
+          </dd>
+          <dt>Override duration</dt>
+          <dd>
+            The temporary access length chosen for one emergency override. It is
+            not a rule setting or saved preference; it becomes the local expiry
+            of that one override session.
+          </dd>
+          <dt>Override challenge</dt>
+          <dd>
+            The temporary, fail-closed state containing the pause deadline and
+            expected confirmation code.
+          </dd>
+          <dt>Override session</dt>
+          <dd>
+            The 5–60 minute access window created by a successful override
+            challenge.
+          </dd>
+          <dt>Daily lock</dt>
+          <dd>
+            An optional commitment that keeps a rule unchanged until the next
+            local-day reset.
+          </dd>
+        </dl>
+        <!-- END:content -->
+      </section>
+    </div>
+    <script src="atlas.js"></script>
+  </body>
+</html>

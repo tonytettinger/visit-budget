@@ -10,7 +10,7 @@ import type {
 
 export function createInitialState(now = new Date()): PersistedState {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     localDate: localDateKey(now),
     rules: [],
     usageByRule: {},
@@ -24,7 +24,7 @@ interface LegacyDailyUsage extends DailyUsage {
 }
 
 type StoredState = Omit<PersistedState, "schemaVersion" | "usageByRule"> & {
-  schemaVersion: 1 | 2 | 3;
+  schemaVersion: 1 | 2 | 3 | 4;
   usageByRule: Record<string, DailyUsage | LegacyDailyUsage>;
 };
 
@@ -35,7 +35,8 @@ export function migrateState(raw: unknown, now = new Date()): PersistedState {
     !("schemaVersion" in raw) ||
     (raw.schemaVersion !== 1 &&
       raw.schemaVersion !== 2 &&
-      raw.schemaVersion !== 3)
+      raw.schemaVersion !== 3 &&
+      raw.schemaVersion !== 4)
   ) {
     return createInitialState(now);
   }
@@ -43,7 +44,7 @@ export function migrateState(raw: unknown, now = new Date()): PersistedState {
   const stored = raw as StoredState;
   return {
     ...stored,
-    schemaVersion: 3,
+    schemaVersion: 4,
     rules: stored.rules.map(normalizeRule),
     usageByRule: Object.fromEntries(
       Object.entries(stored.usageByRule).map(([ruleId, usage]) => [
@@ -67,6 +68,7 @@ function migrateUsage(usage: DailyUsage | LegacyDailyUsage): DailyUsage {
     ruleId: usage.ruleId,
     localDate: usage.localDate,
     visitsUsed: usage.visitsUsed,
+    activeTimeUsedMs: usage.activeTimeUsedMs ?? 0,
     ...(overrideSessionExpiresAt === undefined
       ? {}
       : { overrideSessionExpiresAt }),
@@ -134,7 +136,7 @@ export function saveRule(
   }
 
   const existing = state.rules.find((item) => item.id === rule.id);
-  if (existing?.dailyLockEnabled) {
+  if (existing?.dailyLockEnabled || changesBudgetType(existing, rule)) {
     return {
       state: withPendingChange(state, {
         ruleId: rule.id,
@@ -160,6 +162,20 @@ export function saveRule(
     },
     scheduled: false,
   };
+}
+
+function changesBudgetType(
+  existing: SiteRule | undefined,
+  replacement: SiteRule,
+): boolean {
+  if (!existing) {
+    return false;
+  }
+  return (
+    (existing.mode === "visit-limit" || existing.mode === "time-limit") &&
+    (replacement.mode === "visit-limit" || replacement.mode === "time-limit") &&
+    existing.mode !== replacement.mode
+  );
 }
 
 export function deleteRule(

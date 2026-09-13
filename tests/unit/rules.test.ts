@@ -1,6 +1,7 @@
 import {
   findIndistinguishableRule,
   findMatchingRule,
+  normalizeRule,
   normalizePathPrefix,
   parseRuleTarget,
   permissionOriginsForRule,
@@ -35,6 +36,28 @@ describe("rule parsing and normalization", () => {
   it("normalizes empty and repeated-slash paths", () => {
     expect(normalizePathPrefix("")).toBe("/");
     expect(normalizePathPrefix("//news///world/")).toBe("/news/world");
+  });
+
+  it("accepts 15-minute-step time budgets and removes visit-only settings", () => {
+    const normalized = normalizeRule(
+      rule({
+        mode: "time-limit",
+        dailyTimeLimitMinutes: 30,
+        countTabReturns: true,
+      }),
+    );
+
+    expect(normalized.dailyTimeLimitMinutes).toBe(30);
+    expect(normalized.dailyLimit).toBeUndefined();
+    expect(normalized.countTabReturns).toBe(false);
+  });
+
+  it.each([14, 31, 241])("rejects invalid daily time budget %i", (minutes) => {
+    expect(() =>
+      normalizeRule(
+        rule({ mode: "time-limit", dailyTimeLimitMinutes: minutes }),
+      ),
+    ).toThrow("Daily time must be 15 minutes to 4 hours in 15-minute steps.");
   });
 });
 

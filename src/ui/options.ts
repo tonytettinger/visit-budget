@@ -11,7 +11,7 @@ import { requestRulePermissionWithContext } from "./permission-consent";
 
 let view: StateView = {
   state: {
-    schemaVersion: 3,
+    schemaVersion: 4,
     localDate: "",
     rules: [],
     usageByRule: {},

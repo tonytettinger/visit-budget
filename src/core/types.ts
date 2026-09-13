@@ -1,4 +1,4 @@
-export type RuleMode = "visit-limit" | "permanent-block";
+export type RuleMode = "visit-limit" | "time-limit" | "permanent-block";
 
 export interface SiteRule {
   id: string;
@@ -8,6 +8,7 @@ export interface SiteRule {
   excludePathPrefixes: string[];
   mode: RuleMode;
   dailyLimit?: number;
+  dailyTimeLimitMinutes?: number;
   countTabReturns: boolean;
   dailyLockEnabled: boolean;
 }
@@ -16,6 +17,7 @@ export interface DailyUsage {
   ruleId: string;
   localDate: string;
   visitsUsed: number;
+  activeTimeUsedMs?: number;
   overrideSessionExpiresAt?: number;
 }
 
@@ -44,7 +46,7 @@ export interface OverrideChallenge {
 }
 
 export interface PersistedState {
-  schemaVersion: 3;
+  schemaVersion: 4;
   localDate: string;
   rules: SiteRule[];
   usageByRule: Record<string, DailyUsage>;

@@ -1,5 +1,9 @@
 import type { SiteRule } from "./types";
 
+export const MINIMUM_DAILY_TIME_LIMIT_MINUTES = 15;
+export const MAXIMUM_DAILY_TIME_LIMIT_MINUTES = 4 * 60;
+export const DAILY_TIME_LIMIT_STEP_MINUTES = 15;
+
 type RuleInput = Omit<SiteRule, "countTabReturns"> & {
   countTabReturns?: boolean;
 };
@@ -82,8 +86,24 @@ export function normalizeRule(rule: RuleInput): SiteRule {
     ) {
       throw new Error("Daily visits must be a whole number from 1 to 999.");
     }
+    delete normalized.dailyTimeLimitMinutes;
+  } else if (normalized.mode === "time-limit") {
+    if (
+      normalized.dailyTimeLimitMinutes === undefined ||
+      !Number.isInteger(normalized.dailyTimeLimitMinutes) ||
+      normalized.dailyTimeLimitMinutes < MINIMUM_DAILY_TIME_LIMIT_MINUTES ||
+      normalized.dailyTimeLimitMinutes > MAXIMUM_DAILY_TIME_LIMIT_MINUTES ||
+      normalized.dailyTimeLimitMinutes % DAILY_TIME_LIMIT_STEP_MINUTES !== 0
+    ) {
+      throw new Error(
+        "Daily time must be 15 minutes to 4 hours in 15-minute steps.",
+      );
+    }
+    delete normalized.dailyLimit;
+    normalized.countTabReturns = false;
   } else {
     delete normalized.dailyLimit;
+    delete normalized.dailyTimeLimitMinutes;
     normalized.countTabReturns = false;
   }
 

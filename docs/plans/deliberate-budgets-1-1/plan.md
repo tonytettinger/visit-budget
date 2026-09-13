@@ -9,7 +9,7 @@ Delivery: direct commits to `main`
 
 ## Phase 1 — Add explicit budget types and migratable core state
 
-Status: todo
+Status: done
 
 Checkpoint: no
 
@@ -18,7 +18,7 @@ Checkpoint: no
   mode change for the next local midnight.
 - Stories: US-1, US-3
 - Files: `src/core/types.ts`, `src/core/rules.ts`, `src/core/state.ts`,
-  `tests/unit/rules.test.ts`, `tests/unit/state.test.ts`,
+  `src/ui/options.ts`, `tests/unit/rules.test.ts`, `tests/unit/state.test.ts`,
   `docs/GLOSSARY.md`
 - Test: migration of existing visit rules, valid 15-minute to four-hour time
   budgets, and next-day mode scheduling.

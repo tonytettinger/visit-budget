@@ -54,7 +54,7 @@ describe("rule state", () => {
       ],
     });
 
-    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.schemaVersion).toBe(4);
     expect(migrated.rules[0]?.countTabReturns).toBe(false);
     expect(migrated.pendingChanges[0]?.replacement?.countTabReturns).toBe(
       false,
@@ -83,6 +83,7 @@ describe("rule state", () => {
       ruleId: "rule-1",
       localDate: "2026-07-05",
       visitsUsed: 3,
+      activeTimeUsedMs: 0,
       overrideSessionExpiresAt: expiresAt,
     });
   });
@@ -110,6 +111,22 @@ describe("rule state", () => {
     expect(deleted.scheduled).toBe(true);
     expect(deleted.state.rules).toHaveLength(1);
     expect(deleted.state.pendingChanges[0]?.kind).toBe("delete");
+  });
+
+  it("queues a visit-to-time budget change until tomorrow", () => {
+    const initial = saveRule(createInitialState(today), rule(), today).state;
+    const timeRule = rule({
+      mode: "time-limit",
+      dailyTimeLimitMinutes: 30,
+    });
+    const changed = saveRule(initial, timeRule, today);
+
+    expect(changed.scheduled).toBe(true);
+    expect(changed.state.rules[0]?.mode).toBe("visit-limit");
+    expect(changed.state.pendingChanges[0]?.replacement?.mode).toBe(
+      "time-limit",
+    );
+    expect(changed.state.pendingChanges[0]?.effectiveDate).toBe("2026-07-06");
   });
 
   it("applies pending changes and clears usage on the next day", () => {

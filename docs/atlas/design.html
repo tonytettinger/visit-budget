@@ -1,2 +1,107 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Design — Visit Budget Atlas</title><link rel="stylesheet" href="atlas.css" /></head><body><div class="wrap"><div class="topbar"><a class="brand" href="index.html">← Visit Budget Atlas</a><nav class="toc"><a href="#principles">Principles</a><a href="#components">Components</a></nav><button class="theme-toggle" type="button">● dark</button></div><header class="masthead"><div class="eyebrow">Design system · docs/DESIGN.md</div><h1>Design</h1><p>Calm, legible friction with one decision per surface.</p></header><section id="principles"><div class="sec-head"><h2>Principles</h2><span class="stamp">2026-09-13</span></div><!-- BEGIN:content --><div class="prose"><ul><li>Calm over punitive.</li><li>One decision per surface.</li><li>Predictable over clever.</li><li>Trust is visible.</li></ul></div><div class="panel"><p><span class="swatch" style="background:#155de0"></span> Accent <code>#155de0</code> <span class="swatch" style="background:#17191f"></span> Ink <code>#17191f</code> <span class="swatch" style="background:#ffffff"></span> Background <code>#ffffff</code></p></div></section><section id="components"><div class="sec-head"><h2>Components</h2><span class="stamp">2026-09-13</span></div><table><thead><tr><th>Component</th><th>Rule</th></tr></thead><tbody><tr><td>Buttons</td><td>Accent primary, outlined secondary, visible native disabled state.</td></tr><tr><td>Budget type</td><td>One select offers daily visit budget, daily time budget, or block completely; the matching limit and help text change together.</td></tr><tr><td>Override duration picker</td><td>Two native digit selectors choose 5–60 minutes in five-minute steps; arrow keys work and invalid combinations normalise immediately.</td></tr><tr><td>Confirmation dialog</td><td>Separate native dialog, random five-character code, cancellation returns to the duration picker.</td></tr></tbody></table><div class="panel"><p>Countdown motion conveys no exclusive information. A time budget reports active time remaining, not attention or productivity. Status changes use live regions; all interactions remain keyboard reachable.</p></div><!-- END:content --></section></div><script src="atlas.js"></script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Design — Visit Budget Atlas</title>
+    <link rel="stylesheet" href="atlas.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <a class="brand" href="index.html">← Visit Budget Atlas</a>
+        <nav class="toc">
+          <a href="#principles">Principles</a
+          ><a href="#components">Components</a>
+        </nav>
+        <button class="theme-toggle" type="button">● dark</button>
+      </div>
+      <header class="masthead">
+        <div class="eyebrow">Design system · docs/DESIGN.md</div>
+        <h1>Design</h1>
+        <p>Calm, legible friction with one decision per surface.</p>
+      </header>
+      <section id="principles">
+        <div class="sec-head">
+          <h2>Principles</h2>
+          <span class="stamp">2026-09-13</span>
+        </div>
+        <!-- BEGIN:content -->
+        <div class="prose">
+          <ul>
+            <li>Calm over punitive.</li>
+            <li>One decision per surface.</li>
+            <li>Predictable over clever.</li>
+            <li>Trust is visible.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <p>
+            <span class="swatch" style="background: #155de0"></span> Accent
+            <code>#155de0</code>
+            <span class="swatch" style="background: #17191f"></span> Ink
+            <code>#17191f</code>
+            <span class="swatch" style="background: #ffffff"></span> Background
+            <code>#ffffff</code>
+          </p>
+        </div>
+      </section>
+      <section id="components">
+        <div class="sec-head">
+          <h2>Components</h2>
+          <span class="stamp">2026-09-13</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Rule</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Buttons</td>
+              <td>
+                Accent primary, outlined secondary, visible native disabled
+                state.
+              </td>
+            </tr>
+            <tr>
+              <td>Budget type</td>
+              <td>
+                One select offers daily visit budget, daily time budget, or
+                block completely; the matching limit and help text change
+                together.
+              </td>
+            </tr>
+            <tr>
+              <td>Override duration picker</td>
+              <td>
+                Two native digit selectors choose 5–60 minutes in five-minute
+                steps; arrow keys work and invalid combinations normalise
+                immediately.
+              </td>
+            </tr>
+            <tr>
+              <td>Confirmation dialog</td>
+              <td>
+                Separate native dialog, random five-character code, cancellation
+                returns to the duration picker.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="panel">
+          <p>
+            Countdown motion conveys no exclusive information. A time budget
+            reports active time remaining, not attention or productivity. Status
+            changes use live regions; all interactions remain keyboard
+            reachable.
+          </p>
+        </div>
+        <!-- END:content -->
+      </section>
+    </div>
+    <script src="atlas.js"></script>
+  </body>
+</html>
