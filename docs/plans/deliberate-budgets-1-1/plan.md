@@ -15,17 +15,13 @@ Checkpoint: no
 
 - Does: replace the ambiguous limited-rule shape with explicit visit and time
   budget types; migrate existing rules and usage safely; queue a visit/time
-  mode change for the next local midnight; add bounded override durations to
-  the pure engine and typed messages.
-- Stories: US-1, US-3, US-4, US-5, US-6
+  mode change for the next local midnight.
+- Stories: US-1, US-3
 - Files: `src/core/types.ts`, `src/core/rules.ts`, `src/core/state.ts`,
-  `src/core/engine.ts`, `src/shared/messages.ts`,
   `tests/unit/rules.test.ts`, `tests/unit/state.test.ts`,
-  `tests/unit/engine.test.ts`, `tests/unit/messages.test.ts`,
   `docs/GLOSSARY.md`
 - Test: migration of existing visit rules, valid 15-minute to four-hour time
-  budgets, next-day mode scheduling, time exhaustion, and accepted/rejected
-  five- to 60-minute override durations.
+  budgets, and next-day mode scheduling.
 - Commit: `feat(budgets): add local time-budget state`
 - Rollback: revert
 
@@ -35,7 +31,8 @@ Status: todo
 
 Checkpoint: no
 
-- Does: settle time only for a matching selected tab in focused Chrome; stop
+- Does: add pure time-budget status transitions, then settle time only for a
+  matching selected tab in focused Chrome; stop
   it on tab, window, navigation, startup, and permission transitions; schedule
   the next active-time or override expiry; retain page DOM beneath a time-limit
   overlay and reconcile future navigation.
@@ -60,12 +57,15 @@ duration picker, and code confirmation on both blocked surfaces.
 
 - Does: replace free-form override intention with the 5–60 minute two-digit
   native picker; make warning, confirmation, and success copy state the chosen
-  duration; add clear time-budget controls and remaining-time status; clarify
-  the optional visit-only tab-return switch without changing its behaviour.
+  duration; update the shared override messages and worker at the same time;
+  add clear time-budget controls and remaining-time status; clarify the
+  optional visit-only tab-return switch without changing its behaviour.
 - Stories: US-1, US-3, US-4, US-5, US-6
 - Files: `public/blocked.html`, `public/options.html`, `public/popup.html`,
   `public/styles.css`, `src/ui/blocked.ts`, `src/ui/options.ts`,
-  `src/ui/popup.ts`, `src/content/guard.ts`,
+  `src/ui/popup.ts`, `src/content/guard.ts`, `src/core/engine.ts`,
+  `src/shared/messages.ts`, `src/background/service-worker.ts`,
+  `tests/unit/engine.test.ts`, `tests/unit/messages.test.ts`,
   `tests/e2e/visit-budget.spec.ts`, `docs/DESIGN.md`
 - Test: an E2E journey selects a 25-minute override using the keyboard,
   rejects an incorrect code, preserves the selected duration on retry, grants
