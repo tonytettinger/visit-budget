@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visit Budget — Atlas</title>
+    <link rel="stylesheet" href="atlas.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <a class="brand" href="index.html">Visit Budget</a>
+        <nav class="toc"><a href="#overview">Overview</a><a href="#workflow">Workflow</a><a href="#explore">Explore</a></nav>
+        <button class="theme-toggle" type="button">● dark</button>
+      </div>
+      <header class="masthead">
+        <div class="eyebrow">Project Atlas · Chrome extension</div>
+        <h1>Visit Budget</h1>
+        <p>Deliberate friction before automatic checking and extended scrolling, kept on the device.</p>
+      </header>
+      <section id="overview">
+        <div class="sec-head"><h2>Overview</h2><span class="stamp">2026-09-13</span></div>
+        <!-- BEGIN:overview -->
+        <div class="panel"><dl class="kv">
+          <dt>Problem</dt><dd>Website limits are often too easy to bypass or too rigid for legitimate access.</dd>
+          <dt>User &amp; job</dt><dd>Help a desktop browser user turn an automatic re-entry into a conscious decision while retaining necessary access.</dd>
+          <dt>Status</dt><dd>Version 1.0.0 release candidate; deliberate budgets 1.1 is planned.</dd>
+          <dt>Run locally</dt><dd><code>npm run check</code></dd>
+          <dt>Distribution</dt><dd>Chrome Web Store submission materials prepared; unpacked build at <code>dist/</code>.</dd>
+        </dl></div>
+        <!-- END:overview -->
+      </section>
+      <section id="workflow">
+        <div class="sec-head"><h2>Workflow</h2><span class="stamp">2026-09-13</span></div>
+        <!-- BEGIN:workflow -->
+        <details>
+          <summary>Setup — complete (4/4)</summary>
+          <ul class="flow">
+            <li class="done"><span class="n">1</span><span><span class="t">PRD</span><span class="d">scope and stories</span></span></li>
+            <li class="done"><span class="n">2</span><span><span class="t">Roadmap</span><span class="d">prioritised milestones</span></span></li>
+            <li class="done"><span class="n">3</span><span><span class="t">Architecture</span><span class="d">module map and ADR</span></span></li>
+            <li class="done"><span class="n">4</span><span><span class="t">Design</span><span class="d">interaction rules for the UI</span></span></li>
+          </ul>
+        </details>
+        <div class="flow-loop">
+          <span class="step"><b>1</b> pick item</span><span class="arrow">→</span>
+          <span class="step"><b>2</b> stories</span><span class="arrow">→</span>
+          <span class="step"><b>3</b> plan</span><span class="arrow">→</span>
+          <span class="step now"><b>4</b> implement</span><span class="arrow">→</span>
+          <span class="step"><b>5</b> gate</span><span class="arrow">→</span>
+          <span class="step"><b>6</b> changelog</span><span class="arrow">↺</span>
+        </div>
+        <p class="flow-note">Deliberate budgets 1.1 — four planned phases, awaiting approval.</p>
+        <!-- END:workflow -->
+      </section>
+      <section id="explore">
+        <div class="sec-head"><h2>Explore</h2></div>
+        <!-- BEGIN:nav -->
+        <div class="cards">
+          <a class="card" href="prd.html"><span class="card-t">Product — PRD</span><p>Scope, stories, edge states, and limits.</p><span class="card-m">active · updated 2026-09-13</span></a>
+          <a class="card" href="roadmap.html"><span class="card-t">Roadmap</span><p>Privacy-first budgets and later work.</p><span class="card-m">current priorities · updated 2026-09-13</span></a>
+          <a class="card" href="board.html"><span class="card-t">Board</span><p>Current delivery work by status.</p><span class="card-m">deliberate budgets planned · updated 2026-09-13</span></a>
+          <a class="card" href="plans.html"><span class="card-t">Plans</span><p>Commit-sized delivery phases.</p><span class="card-m">one draft plan · updated 2026-09-13</span></a>
+          <a class="card" href="design.html"><span class="card-t">Design</span><p>Visual language and interaction rules.</p><span class="card-m">UI system · updated 2026-09-13</span></a>
+          <a class="card" href="glossary.html"><span class="card-t">Glossary</span><p>The product’s shared language.</p><span class="card-m">budget and access terms · updated 2026-09-13</span></a>
+          <a class="card" href="changelog.html"><span class="card-t">Changelog</span><p>What changed and why.</p><span class="card-m">release trail · updated 2026-09-13</span></a>
+          <a class="card" href="architecture.html"><span class="card-t">Architecture</span><p>Module boundaries, data model, and flow.</p><span class="card-m">local enforcement · updated 2026-09-13</span></a>
+          <a class="card" href="decisions.html"><span class="card-t">Decisions</span><p>Architecture decisions and their trade-offs.</p><span class="card-m">one accepted record · updated 2026-09-13</span></a>
+        </div>
+        <!-- END:nav -->
+      </section>
+    </div>
+    <script src="atlas.js"></script>
+  </body>
+</html>

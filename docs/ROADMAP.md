@@ -1,18 +1,23 @@
 # Roadmap — Visit Budget
 
-Last updated: 2026-08-21
+Last updated: 2026-09-13
 
-## Milestone: Private time awareness
+## Milestone: Deliberate budgets 1.1
 
-Outcome: Users can understand active time spent on selected sites without
-turning their browsing history into a remote analytics product.
+Outcome: Users can choose one understandable daily boundary for a site—visits,
+active time, or a permanent block—then take necessary temporary access without
+turning the guard into a text-completion exercise.
 
-- Define active-time semantics — distinguish visible, focused use from an idle
-  or background tab before collecting new data.
-- Build an on-device time dashboard — show useful daily and weekly patterns with
-  explicit retention and deletion controls.
-- Validate demand — confirm that time awareness changes behavior before adding
-  billing or account infrastructure.
+- Replace the written override gate with a bounded duration picker — retain the
+  pause and code confirmation while removing filler text · plan:
+  `docs/plans/deliberate-budgets-1-1/plan.md`
+- Clarify optional tab-return counting in rule controls — make the stricter
+  behaviour an informed per-rule choice, not a surprise · plan:
+  `docs/plans/deliberate-budgets-1-1/plan.md`
+- Add a per-rule choice between a daily visit budget and daily active-time
+  budget — active time counts only in a selected tab in focused Chrome and does
+  not become remote productivity surveillance · plan:
+  `docs/plans/deliberate-budgets-1-1/plan.md`
 
 ## Milestone: Optional premium upgrade
 
@@ -31,6 +36,9 @@ budget and permanent blocking remain intact.
 
 ## Later
 
+- Private time awareness — consider an on-device daily/weekly dashboard with
+  clear retention and deletion controls only after people find the active-time
+  boundary useful · from: user
 - Cross-device settings sync — useful only after accounts have a justified
   purpose beyond billing · from: original 1.0 non-goals
 - Additional premium friction patterns — evaluate from real user requests, not
