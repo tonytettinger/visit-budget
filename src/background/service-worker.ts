@@ -2,6 +2,7 @@ import { formatResetTime } from "../core/date";
 import {
   evaluateEntry,
   getRuleStatus,
+  settleActiveTime,
   startOverrideSession,
   validateOverrideRequest,
 } from "../core/engine";
@@ -59,7 +60,8 @@ let blockingFingerprint = "";
 chrome.runtime.onInstalled.addListener(() => {
   void runExclusive(async () => {
     const state = await loadState();
-    const session = await loadSession();
+    const session = await settleSessionTime(state, await loadSession());
+    await saveSession(session);
     await reconcileAll(state, session, true);
   }).catch(reportError);
 });
@@ -93,12 +95,10 @@ chrome.tabs.onActivated.addListener(({ tabId, windowId }) => {
   }).catch(reportError);
 });
 
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  if (removeInfo.isWindowClosing) {
-    return;
-  }
+chrome.tabs.onRemoved.addListener((tabId) => {
   void runExclusive(async () => {
-    const session = await loadSession();
+    const state = await loadState();
+    const session = await settleSessionTime(state, await loadSession());
     await saveSession(removeEntryReceipt(session, tabId));
     await processCurrentActiveTab();
   }).catch(reportError);
@@ -106,9 +106,11 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
 
 chrome.windows.onFocusChanged.addListener((windowId) => {
   void runExclusive(async () => {
-    const session = await loadSession();
+    const state = await loadState();
+    const session = await settleSessionTime(state, await loadSession());
     if (windowId === chrome.windows.WINDOW_ID_NONE) {
       await saveSession({ ...session, browserFocused: false });
+      await reconcileAll(state, session, false);
       return;
     }
 
@@ -149,7 +151,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
   void runExclusive(async () => {
     const state = await loadState();
-    let session = await loadSession();
+    let session = await settleSessionTime(state, await loadSession());
     if (session.activeAccess === "override-session") {
       const activeRule = state.rules.find(
         (rule) => rule.id === session.activeRuleId,
@@ -170,6 +172,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         }
       }
     }
+    session = exhaustActiveTimeIfNeeded(state, session, new Date());
+    await saveSession(session);
     await reconcileAll(state, session, false);
     await refreshActiveGuard();
   }).catch(reportError);
@@ -178,7 +182,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 chrome.permissions.onAdded.addListener(() => {
   void runExclusive(async () => {
     const state = await loadState();
-    const session = await loadSession();
+    const session = await settleSessionTime(state, await loadSession());
+    await saveSession(session);
     await reconcileAll(state, session, true);
   }).catch(reportError);
 });
@@ -186,7 +191,8 @@ chrome.permissions.onAdded.addListener(() => {
 chrome.permissions.onRemoved.addListener(() => {
   void runExclusive(async () => {
     const state = await loadState();
-    const session = await loadSession();
+    const session = await settleSessionTime(state, await loadSession());
+    await saveSession(session);
     await reconcileAll(state, session, false);
   }).catch(reportError);
 });
@@ -354,7 +360,7 @@ async function processActiveUrl(
   const now = new Date();
   const state = await loadState(now);
   const rule = findMatchingRule(url, state.rules);
-  const session = await loadSession();
+  const session = await settleSessionTime(state, await loadSession(), now);
 
   const sameRule = rule?.id === session.activeRuleId;
   const countsTabReturn =
@@ -365,15 +371,17 @@ async function processActiveUrl(
     session.activeTabId !== tabId;
 
   if (rule && sameRule && !countsTabReturn) {
-    const nextSession: SessionState = {
+    let nextSession: SessionState = {
       ...session,
       browserFocused: true,
       focusedWindowId: windowId,
       activeTabId: tabId,
       activeUrl: url,
     };
-    await saveSession(nextSession);
     const status = activeStatus(rule, state, nextSession, now);
+    nextSession = startSessionTime(nextSession, rule, status, now);
+    await saveSession(nextSession);
+    await reconcileBlockingIfNeeded(state, nextSession, now);
     await updateBadge(status);
     await notifyGuard(tabId, status, undefined, nextSession);
     return status;
@@ -392,7 +400,7 @@ async function processActiveUrl(
   await saveState(state);
 
   const receipt =
-    decision.kind === "allow"
+    rule.mode === "visit-limit" && decision.kind === "allow"
       ? createEntryReceipt(rule, decision, now)
       : undefined;
   let nextSession = sessionFromDecision(
@@ -402,13 +410,14 @@ async function processActiveUrl(
     windowId,
     url,
   );
+  const status = activeStatus(rule, state, nextSession, now);
+  nextSession = startSessionTime(nextSession, rule, status, now);
   if (receipt) {
     nextSession = addEntryReceipt(nextSession, tabId, receipt);
   }
   await saveSession(nextSession);
   await reconcileBlockingIfNeeded(state, nextSession, now);
 
-  const status = activeStatus(rule, state, nextSession, now);
   await updateBadge(status);
   const delivered = await notifyGuard(tabId, status, receipt, nextSession);
   if (receipt && delivered) {
@@ -488,6 +497,7 @@ function clearActiveContext(
   delete next.activeRuleId;
   delete next.activeAccess;
   delete next.activeRemaining;
+  delete next.activeTimeStartedAt;
   return removeEntryReceipt(next, tabId);
 }
 
@@ -536,6 +546,7 @@ function activeStatus(
   if (
     session.activeRuleId === rule.id &&
     session.activeAccess === "allowed" &&
+    rule.mode !== "time-limit" &&
     usage
   ) {
     return {
@@ -546,6 +557,79 @@ function activeStatus(
     };
   }
   return getRuleStatus(rule, usage, now);
+}
+
+async function settleSessionTime(
+  state: PersistedState,
+  session: SessionState,
+  now = new Date(),
+): Promise<SessionState> {
+  if (
+    session.activeTimeStartedAt === undefined ||
+    session.activeRuleId === undefined ||
+    session.activeAccess !== "allowed"
+  ) {
+    return session;
+  }
+
+  const rule = state.rules.find(
+    (candidate) => candidate.id === session.activeRuleId,
+  );
+  const next = { ...session };
+  delete next.activeTimeStartedAt;
+  if (rule?.mode === "time-limit") {
+    state.usageByRule[rule.id] = settleActiveTime(
+      rule,
+      state.usageByRule[rule.id],
+      session.activeTimeStartedAt,
+      now,
+    );
+    await saveState(state);
+  }
+  return exhaustActiveTimeIfNeeded(state, next, now);
+}
+
+function exhaustActiveTimeIfNeeded(
+  state: PersistedState,
+  session: SessionState,
+  now: Date,
+): SessionState {
+  if (
+    session.activeRuleId === undefined ||
+    session.activeAccess !== "allowed"
+  ) {
+    return session;
+  }
+  const rule = state.rules.find(
+    (candidate) => candidate.id === session.activeRuleId,
+  );
+  if (!rule || rule.mode !== "time-limit") {
+    return session;
+  }
+  const status = getRuleStatus(rule, state.usageByRule[rule.id], now);
+  if (status.kind !== "limit-reached") {
+    return session;
+  }
+  const next = { ...session, activeAccess: "blocked" };
+  delete next.activeRemaining;
+  delete next.activeTimeStartedAt;
+  return next;
+}
+
+function startSessionTime(
+  session: SessionState,
+  rule: SiteRule,
+  status: RuleStatus,
+  now: Date,
+): SessionState {
+  const next = { ...session };
+  if (rule.mode === "time-limit" && status.kind === "available") {
+    next.activeRemaining = status.remaining;
+    next.activeTimeStartedAt = now.getTime();
+  } else {
+    delete next.activeTimeStartedAt;
+  }
+  return next;
 }
 
 async function statusForUrl(url: string): Promise<RuleStatus> {
@@ -771,7 +855,7 @@ async function reconcileAll(
 ): Promise<void> {
   await reconcileContentScript(state.rules);
   await reconcileBlockingIfNeeded(state, session, new Date(), true);
-  await scheduleMaintenance(state);
+  await scheduleMaintenance(state, session);
   if (injectExisting) {
     await injectGuardIntoExistingTabs(state.rules);
   }
@@ -789,6 +873,7 @@ async function reconcileBlockingIfNeeded(
     usage: state.usageByRule,
     activeRuleId: session.activeRuleId,
     activeAccess: session.activeAccess,
+    activeTimeStartedAt: session.activeTimeStartedAt,
   });
   if (!force && fingerprint === blockingFingerprint) {
     return;

@@ -27,7 +27,7 @@ Checkpoint: no
 
 ## Phase 2 — Track active time and enforce it locally
 
-Status: todo
+Status: done
 
 Checkpoint: no
 

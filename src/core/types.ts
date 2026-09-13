@@ -61,6 +61,7 @@ export interface SessionState {
   activeUrl?: string;
   activeAccess?: "allowed" | "override-session" | "blocked";
   activeRemaining?: number;
+  activeTimeStartedAt?: number;
   overrideChallengeByRule?: Record<string, OverrideChallenge>;
   entryReceiptByTab?: Record<string, EntryReceipt>;
 }

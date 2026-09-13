@@ -3,6 +3,7 @@ import {
   OVERRIDE_SESSION_DURATION_MS,
   evaluateEntry,
   getRuleStatus,
+  settleActiveTime,
   startOverrideSession,
 } from "../../src/core/engine";
 import type { DailyUsage, SiteRule } from "../../src/core/types";
@@ -29,6 +30,16 @@ function usage(overrides: Partial<DailyUsage> = {}): DailyUsage {
     localDate: "2026-07-05",
     visitsUsed: 0,
     ...overrides,
+  };
+}
+
+function timeLimitedRule(): SiteRule {
+  return {
+    ...limitedRule(),
+    id: "timed",
+    mode: "time-limit",
+    dailyTimeLimitMinutes: 30,
+    countTabReturns: false,
   };
 }
 
@@ -149,5 +160,84 @@ describe("emergency overrides", () => {
     expect(repeated.overrideSessionExpiresAt).toBe(
       now.getTime() + OVERRIDE_SESSION_DURATION_MS,
     );
+  });
+});
+
+describe("time budgets", () => {
+  it("uses only the elapsed focused-tab segment", () => {
+    const rule = timeLimitedRule();
+    const startedAt = now.getTime();
+    const settled = settleActiveTime(
+      rule,
+      {
+        ruleId: rule.id,
+        localDate: "2026-07-05",
+        visitsUsed: 0,
+        activeTimeUsedMs: 20 * 60_000,
+      },
+      startedAt,
+      new Date(startedAt + 5 * 60_000),
+    );
+
+    expect(settled.activeTimeUsedMs).toBe(25 * 60_000);
+    const status = getRuleStatus(rule, settled, now);
+    expect(status.kind).toBe("available");
+    if (status.kind === "available") {
+      expect(status.remaining).toBe(5 * 60_000);
+    }
+  });
+
+  it("blocks once the time budget is exhausted", () => {
+    const rule = timeLimitedRule();
+    const settled = settleActiveTime(
+      rule,
+      {
+        ruleId: rule.id,
+        localDate: "2026-07-05",
+        visitsUsed: 0,
+        activeTimeUsedMs: 29 * 60_000,
+      },
+      now.getTime(),
+      new Date(now.getTime() + 2 * 60_000),
+    );
+
+    expect(settled.activeTimeUsedMs).toBe(30 * 60_000);
+    expect(getRuleStatus(rule, settled, now).kind).toBe("limit-reached");
+    expect(evaluateEntry(rule, settled, now).kind).toBe("limit-reached");
+  });
+
+  it("does not add time when the recorded start is in the future", () => {
+    const rule = timeLimitedRule();
+    const settled = settleActiveTime(
+      rule,
+      {
+        ruleId: rule.id,
+        localDate: "2026-07-05",
+        visitsUsed: 0,
+        activeTimeUsedMs: 10 * 60_000,
+      },
+      now.getTime() + 60_000,
+      now,
+    );
+    expect(settled.activeTimeUsedMs).toBe(10 * 60_000);
+  });
+
+  it("starts a fresh daily total at local midnight", () => {
+    const rule = timeLimitedRule();
+    const afterMidnight = new Date(2026, 6, 6, 0, 5, 0);
+    const settled = settleActiveTime(
+      rule,
+      {
+        ruleId: rule.id,
+        localDate: "2026-07-05",
+        visitsUsed: 0,
+        activeTimeUsedMs: 25 * 60_000,
+      },
+      new Date(2026, 6, 5, 23, 55, 0).getTime(),
+      afterMidnight,
+    );
+
+    expect(settled.localDate).toBe("2026-07-06");
+    expect(settled.activeTimeUsedMs).toBe(5 * 60_000);
   });
 });

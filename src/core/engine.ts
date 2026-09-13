@@ -10,6 +10,7 @@ export function createDailyUsage(ruleId: string, now: Date): DailyUsage {
     ruleId,
     localDate: localDateKey(now),
     visitsUsed: 0,
+    activeTimeUsedMs: 0,
   };
 }
 
@@ -27,7 +28,7 @@ export function currentUsage(
       delete expired.overrideSessionExpiresAt;
       return expired;
     }
-    return { ...usage };
+    return { ...usage, activeTimeUsedMs: usage.activeTimeUsedMs ?? 0 };
   }
   return createDailyUsage(ruleId, now);
 }
@@ -50,6 +51,23 @@ export function evaluateEntry(
       kind: "override-session",
       ruleId: rule.id,
       expiresAt: usage.overrideSessionExpiresAt,
+      usage,
+    };
+  }
+
+  if (rule.mode === "time-limit") {
+    const remaining = remainingActiveTimeMs(rule, usage);
+    if (remaining === 0) {
+      return {
+        kind: "limit-reached",
+        ruleId: rule.id,
+        usage,
+      };
+    }
+    return {
+      kind: "allow",
+      ruleId: rule.id,
+      remaining,
       usage,
     };
   }
@@ -94,6 +112,18 @@ export function getRuleStatus(
     };
   }
 
+  if (rule.mode === "time-limit") {
+    if (remainingActiveTimeMs(rule, usage) > 0) {
+      return {
+        kind: "available",
+        rule,
+        usage,
+        remaining: remainingActiveTimeMs(rule, usage),
+      };
+    }
+    return { kind: "limit-reached", rule, usage };
+  }
+
   const limit = rule.dailyLimit ?? 1;
   if (usage.visitsUsed < limit) {
     return {
@@ -108,6 +138,42 @@ export function getRuleStatus(
     kind: "limit-reached",
     rule,
     usage,
+  };
+}
+
+export function remainingActiveTimeMs(
+  rule: SiteRule,
+  usage: DailyUsage,
+): number {
+  return Math.max(
+    0,
+    (rule.dailyTimeLimitMinutes ?? 0) * 60_000 - (usage.activeTimeUsedMs ?? 0),
+  );
+}
+
+export function settleActiveTime(
+  rule: SiteRule,
+  existingUsage: DailyUsage | undefined,
+  startedAt: number,
+  now: Date,
+): DailyUsage {
+  const usage = currentUsage(rule.id, existingUsage, now);
+  if (rule.mode !== "time-limit") {
+    return usage;
+  }
+
+  const localMidnight = new Date(now);
+  localMidnight.setHours(0, 0, 0, 0);
+  const elapsed = Math.max(
+    0,
+    now.getTime() - Math.max(startedAt, localMidnight.getTime()),
+  );
+  return {
+    ...usage,
+    activeTimeUsedMs: Math.min(
+      (usage.activeTimeUsedMs ?? 0) + elapsed,
+      (rule.dailyTimeLimitMinutes ?? 0) * 60_000,
+    ),
   };
 }
 
