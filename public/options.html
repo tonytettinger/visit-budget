@@ -90,8 +90,35 @@
                 <span>Mode</span>
                 <select id="mode" name="mode">
                   <option value="visit-limit">Limit daily visits</option>
+                  <option value="time-limit">Limit daily time</option>
                   <option value="permanent-block">Block completely</option>
                 </select>
+              </label>
+
+              <label class="field" id="time-limit-field" hidden>
+                <span>Daily active time</span>
+                <select id="daily-time-limit" name="dailyTimeLimit">
+                  <option value="15">15 minutes</option>
+                  <option value="30" selected>30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">1 hour</option>
+                  <option value="75">1 hour 15 minutes</option>
+                  <option value="90">1 hour 30 minutes</option>
+                  <option value="105">1 hour 45 minutes</option>
+                  <option value="120">2 hours</option>
+                  <option value="135">2 hours 15 minutes</option>
+                  <option value="150">2 hours 30 minutes</option>
+                  <option value="165">2 hours 45 minutes</option>
+                  <option value="180">3 hours</option>
+                  <option value="195">3 hours 15 minutes</option>
+                  <option value="210">3 hours 30 minutes</option>
+                  <option value="225">3 hours 45 minutes</option>
+                  <option value="240">4 hours</option>
+                </select>
+                <small
+                  >Counts only while this tab is selected in focused
+                  Chrome.</small
+                >
               </label>
 
               <label class="field" id="limit-field">
@@ -122,11 +149,14 @@
               >
                 <input id="count-tab-returns" type="checkbox" />
                 <span>
-                  <strong>Count tab returns as visits</strong>
+                  <strong
+                    >Count switches between this site's tabs as visits</strong
+                  >
                   <small
-                    >Returning to this website after viewing another tab uses
-                    another visit. Refreshes and navigation within the website
-                    do not.</small
+                    >Switching away to another site and back already uses a
+                    visit. Turn this on to also count switches between tabs
+                    covered by this rule. Refreshes and navigation within the
+                    website do not.</small
                   >
                 </span>
               </label>
@@ -207,8 +237,7 @@
           <h2 id="about-heading">About Visit Budget</h2>
           <p>
             Deliberate friction for automatic website re-checking. Rules, visit
-            counts, and override state stay on this device. Written intentions
-            are never saved.
+            counts, and override state stay on this device.
           </p>
         </div>
         <p class="maker-credit">

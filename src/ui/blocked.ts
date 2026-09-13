@@ -1,4 +1,3 @@
-import { MINIMUM_INTENTION_LENGTH } from "../core/engine";
 import { safeBlockedTarget } from "../core/rules";
 import type { SiteRule } from "../core/types";
 import type {
@@ -17,8 +16,12 @@ requiredElement<HTMLButtonElement>("#go-back").addEventListener(
   "click",
   () => void leaveForNow(),
 );
-requiredElement<HTMLTextAreaElement>("#intention").addEventListener(
-  "input",
+requiredElement<HTMLSelectElement>("#override-tens").addEventListener(
+  "change",
+  updateOverrideButton,
+);
+requiredElement<HTMLSelectElement>("#override-ones").addEventListener(
+  "change",
   updateOverrideButton,
 );
 requiredElement<HTMLButtonElement>("#continue-override").addEventListener(
@@ -75,7 +78,9 @@ function render(
   const isPermanent = value.status.kind === "permanently-blocked";
   requiredElement<HTMLElement>("#blocked-title").textContent = isPermanent
     ? "This website is blocked"
-    : "You've used today's visit budget";
+    : value.rule.mode === "time-limit"
+      ? "You've used today's time budget"
+      : "You've used today's visit budget";
   requiredElement<HTMLElement>("#blocked-site").textContent =
     value.rule.hostname;
   requiredElement<HTMLElement>("#blocked-reset").textContent =
@@ -87,7 +92,7 @@ function render(
   if (canOverride) {
     countdownTimer = window.setInterval(updateOverrideButton, 250);
     updateOverrideButton();
-    requiredElement<HTMLTextAreaElement>("#intention").focus();
+    requiredElement<HTMLSelectElement>("#override-tens").focus();
   }
 }
 
@@ -103,7 +108,6 @@ function renderStaleRule(): void {
 
 function updateOverrideButton(): void {
   const button = requiredElement<HTMLButtonElement>("#continue-override");
-  const input = requiredElement<HTMLTextAreaElement>("#intention");
   if (!context || context.kind === "stale-rule") {
     button.disabled = true;
     return;
@@ -112,7 +116,11 @@ function updateOverrideButton(): void {
     0,
     Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
   );
-  button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
+  const durationMinutes = selectedDurationMinutes();
+  button.textContent =
+    seconds > 0
+      ? `Override (${seconds}s)`
+      : `Override for ${durationMinutes} minutes`;
   const pauseCountdown = requiredElement<HTMLElement>("#pause-countdown");
   if (seconds !== previousPauseSeconds) {
     pauseCountdown.textContent =
@@ -121,10 +129,7 @@ function updateOverrideButton(): void {
         : "The pause is complete. You can continue when ready.";
     previousPauseSeconds = seconds;
   }
-  const intentionLength = input.value.trim().length;
-  requiredElement<HTMLElement>("#intention-count").textContent =
-    `${intentionLength} / ${MINIMUM_INTENTION_LENGTH}`;
-  button.disabled = seconds > 0 || intentionLength < MINIMUM_INTENTION_LENGTH;
+  button.disabled = seconds > 0 || !isValidDuration(durationMinutes);
   if (seconds === 0 && countdownTimer !== undefined) {
     window.clearInterval(countdownTimer);
     countdownTimer = undefined;
@@ -136,14 +141,13 @@ async function beginConfirmation(): Promise<void> {
     return;
   }
   const button = requiredElement<HTMLButtonElement>("#continue-override");
-  const input = requiredElement<HTMLTextAreaElement>("#intention");
   button.disabled = true;
   renderError("");
   try {
     const result = await sendRequest<OverrideConfirmationResult>({
       type: "START_OVERRIDE_CONFIRMATION",
       ruleId: context.rule.id,
-      intention: input.value,
+      durationMinutes: selectedDurationMinutes(),
     });
     showConfirmation(result.code);
   } catch (error) {
@@ -154,6 +158,8 @@ async function beginConfirmation(): Promise<void> {
 
 function showConfirmation(code: string): void {
   requiredElement<HTMLElement>("#override-code").textContent = code;
+  requiredElement<HTMLElement>("#confirmation-description").textContent =
+    `Type this code exactly to start ${selectedDurationMinutes()} minutes of temporary access.`;
   requiredElement<HTMLInputElement>("#confirmation-code").value = "";
   renderConfirmationError("");
   const dialog = requiredElement<HTMLDialogElement>("#override-confirmation");
@@ -185,7 +191,7 @@ async function confirmOverride(): Promise<void> {
     await sendRequest<OverrideSessionResult>({
       type: "CONFIRM_OVERRIDE",
       ruleId: context.rule.id,
-      intention: requiredElement<HTMLTextAreaElement>("#intention").value,
+      durationMinutes: selectedDurationMinutes(),
       code: requiredElement<HTMLInputElement>("#confirmation-code").value,
     });
     location.replace(targetForRule(context.rule));
@@ -218,6 +224,22 @@ function renderError(message: string): void {
 
 function renderConfirmationError(message: string): void {
   requiredElement<HTMLElement>("#confirmation-error").textContent = message;
+}
+
+function selectedDurationMinutes(): number {
+  const tens = Number(
+    requiredElement<HTMLSelectElement>("#override-tens").value,
+  );
+  const ones = Number(
+    requiredElement<HTMLSelectElement>("#override-ones").value,
+  );
+  return tens * 10 + ones;
+}
+
+function isValidDuration(durationMinutes: number): boolean {
+  return (
+    durationMinutes >= 5 && durationMinutes <= 60 && durationMinutes % 5 === 0
+  );
 }
 
 function targetForRule(rule: SiteRule): string {

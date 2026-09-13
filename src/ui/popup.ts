@@ -35,7 +35,7 @@ function render(view: CurrentSiteView): void {
   if (status.kind === "untracked") {
     content.append(
       heading(view.hostname),
-      summary("No visit rule is set for this website."),
+      summary("No budget or block is set for this website."),
       untrackedActions(view.url, view.tabId),
     );
     return;
@@ -65,15 +65,22 @@ function summary(text: string): HTMLElement {
 function statusSummary(status: Exclude<RuleStatus, { kind: "untracked" }>) {
   switch (status.kind) {
     case "available": {
+      if (status.rule.mode === "time-limit") {
+        return summary(`${formatMinutes(status.remaining)} left today`);
+      }
       const limit = status.rule.dailyLimit ?? 1;
       return summary(
         `${status.usage.visitsUsed} of ${limit} visits used today`,
       );
     }
     case "override-session":
-      return summary("A 10-minute override is active for this site.");
+      return summary(
+        `${formatMinutes(Math.max(0, status.expiresAt - Date.now()))} of temporary access remains.`,
+      );
     case "limit-reached":
-      return summary("Today's visit budget is used.");
+      return summary(
+        `Today's ${status.rule.mode === "time-limit" ? "time" : "visit"} budget is used.`,
+      );
     case "permanently-blocked":
       return summary("This website is permanently blocked.");
   }
@@ -87,10 +94,18 @@ function progress(
   const fill = document.createElement("span");
   let percent = 100;
   if (status.kind === "available") {
-    const limit = status.rule.dailyLimit ?? 1;
-    percent = Math.min(100, (status.usage.visitsUsed / limit) * 100);
-    track.setAttribute("aria-valuenow", String(status.usage.visitsUsed));
-    track.setAttribute("aria-valuemax", String(limit));
+    if (status.rule.mode === "time-limit") {
+      const limit = (status.rule.dailyTimeLimitMinutes ?? 30) * 60_000;
+      const used = status.usage.activeTimeUsedMs ?? 0;
+      percent = Math.min(100, (used / limit) * 100);
+      track.setAttribute("aria-valuenow", String(used));
+      track.setAttribute("aria-valuemax", String(limit));
+    } else {
+      const limit = status.rule.dailyLimit ?? 1;
+      percent = Math.min(100, (status.usage.visitsUsed / limit) * 100);
+      track.setAttribute("aria-valuenow", String(status.usage.visitsUsed));
+      track.setAttribute("aria-valuemax", String(limit));
+    }
   }
   fill.style.width = `${percent}%`;
   track.append(fill);
@@ -103,12 +118,15 @@ function remaining(
   const element = create("p", "remaining");
   switch (status.kind) {
     case "available":
-      element.textContent = `${status.remaining} ${
-        status.remaining === 1 ? "visit" : "visits"
-      } remaining`;
+      element.textContent =
+        status.rule.mode === "time-limit"
+          ? `${formatMinutes(status.remaining)} remaining`
+          : `${status.remaining} ${
+              status.remaining === 1 ? "visit" : "visits"
+            } remaining`;
       break;
     case "override-session":
-      element.textContent = "10-minute override session";
+      element.textContent = "Temporary access is active";
       element.classList.add("warning");
       break;
     case "limit-reached":
@@ -143,7 +161,7 @@ function actions(ruleId?: string, permissionGranted = true): HTMLElement {
 
 function untrackedActions(url: string, tabId?: number): HTMLElement {
   const container = create("div", "popup-actions");
-  const add = button("Set visit budget…", "primary");
+  const add = button("Set a budget…", "primary");
   add.addEventListener("click", () => openSetup(url, tabId));
   const settings = button("Open settings", "secondary");
   settings.addEventListener("click", () => openSettings());
@@ -205,4 +223,16 @@ function parseRequestedTabId(): number | undefined {
   }
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function formatMinutes(milliseconds: number): string {
+  const minutes = Math.max(1, Math.ceil(milliseconds / 60_000));
+  if (minutes < 60) {
+    return `${minutes} minutes`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder === 0
+    ? `${hours} ${hours === 1 ? "hour" : "hours"}`
+    : `${hours}h ${remainder}m`;
 }

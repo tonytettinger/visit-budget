@@ -34,6 +34,7 @@ const form = requiredElement<HTMLFormElement>("#rule-form");
 const mode = requiredElement<HTMLSelectElement>("#mode");
 const website = requiredElement<HTMLInputElement>("#website");
 const dailyLimit = requiredElement<HTMLInputElement>("#daily-limit");
+const dailyTimeLimit = requiredElement<HTMLSelectElement>("#daily-time-limit");
 const includeSubdomains = requiredElement<HTMLInputElement>(
   "#include-subdomains",
 );
@@ -92,7 +93,7 @@ async function reload(preferredRuleId = selectedRuleId): Promise<void> {
     if (requestedDraftWebsite) {
       website.value = requestedDraftWebsite;
       requiredElement<HTMLElement>("#editor-heading").textContent =
-        "Set visit budget";
+        "Set a budget";
       requiredElement<HTMLElement>("#editor-subtitle").textContent =
         `Review the rule for ${requestedDraftWebsite}.`;
       form.classList.add("rule-form-quick-add");
@@ -157,6 +158,7 @@ function renderEditor(): void {
   includeSubdomains.checked = true;
   countTabReturns.checked = false;
   dailyLimit.value = "3";
+  dailyTimeLimit.value = "30";
   includedPaths.value = "/";
   mode.value = "visit-limit";
   heading.textContent = rule ? "Edit rule" : "Add website";
@@ -174,6 +176,7 @@ function renderEditor(): void {
     website.value = rule.hostname;
     mode.value = rule.mode;
     dailyLimit.value = String(rule.dailyLimit ?? 3);
+    dailyTimeLimit.value = String(rule.dailyTimeLimitMinutes ?? 30);
     includeSubdomains.checked = rule.includeSubdomains;
     includedPaths.value = rule.includePathPrefixes.join("\n");
     excludedPaths.value = rule.excludePathPrefixes.join("\n");
@@ -201,19 +204,23 @@ async function submitRule(): Promise<void> {
 
   try {
     const target = parseRuleTarget(website.value);
+    const selectedMode = mode.value as SiteRule["mode"];
     const rule: SiteRule = {
       id: selectedRuleId ?? crypto.randomUUID(),
       hostname: target.hostname,
       includeSubdomains: includeSubdomains.checked,
       includePathPrefixes: parsePaths(includedPaths.value, target.pathPrefix),
       excludePathPrefixes: parsePaths(excludedPaths.value),
-      mode:
-        mode.value === "permanent-block" ? "permanent-block" : "visit-limit",
-      countTabReturns: mode.value === "visit-limit" && countTabReturns.checked,
+      mode: selectedMode,
+      countTabReturns:
+        selectedMode === "visit-limit" && countTabReturns.checked,
       dailyLockEnabled: dailyLock.checked,
     };
     if (rule.mode === "visit-limit") {
       rule.dailyLimit = Number(dailyLimit.value);
+    }
+    if (rule.mode === "time-limit") {
+      rule.dailyTimeLimitMinutes = Number(dailyTimeLimit.value);
     }
 
     if (
@@ -338,6 +345,9 @@ function statusLabel(rule: SiteRule): string {
   );
   switch (status.kind) {
     case "available":
+      if (rule.mode === "time-limit") {
+        return `${formatMinutes(Math.ceil(status.remaining / 60_000))} left today`;
+      }
       return `${status.remaining} ${
         status.remaining === 1 ? "visit" : "visits"
       } left today`;
@@ -355,7 +365,9 @@ function statusLabel(rule: SiteRule): string {
 function ruleMeta(rule: SiteRule): string {
   return rule.mode === "permanent-block"
     ? "Blocked"
-    : `${rule.dailyLimit ?? 1} / day`;
+    : rule.mode === "time-limit"
+      ? `${formatMinutes(rule.dailyTimeLimitMinutes ?? 30)} / day`
+      : `${rule.dailyLimit ?? 1} / day`;
 }
 
 function displayScope(rule: SiteRule): string {
@@ -379,11 +391,26 @@ function parsePaths(value: string, fallback?: string): string[] {
 
 function updateModeVisibility(): void {
   const limitField = requiredElement<HTMLElement>("#limit-field");
+  const timeLimitField = requiredElement<HTMLElement>("#time-limit-field");
   const tabReturnField = requiredElement<HTMLElement>("#tab-return-field");
   const isLimit = mode.value === "visit-limit";
+  const isTimeLimit = mode.value === "time-limit";
   limitField.hidden = !isLimit;
+  timeLimitField.hidden = !isTimeLimit;
   tabReturnField.hidden = !isLimit;
   dailyLimit.required = isLimit;
+  dailyTimeLimit.required = isTimeLimit;
+}
+
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} minutes`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder === 0
+    ? `${hours} ${hours === 1 ? "hour" : "hours"}`
+    : `${hours}h ${remainder}m`;
 }
 
 function showFormError(message: string): void {

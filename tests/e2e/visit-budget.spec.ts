@@ -89,14 +89,12 @@ test("limits re-entry and grants a private override session", async () => {
     );
     await makeEmergencyPauseReady(page);
     await page.reload();
-    const intention = page.getByLabel("What do you intend to do?");
-    await expect(intention).toBeFocused();
-    await expect(intention).toHaveAttribute("inputmode", "text");
-    const intentionText =
-      "Check the one account email I am expecting, reply if needed, then leave.";
-    await intention.pressSequentially(intentionText);
-    await expect(intention).toHaveValue(intentionText);
-    await page.getByRole("button", { name: "Continue" }).click();
+    const tens = page.getByLabel("Tens of minutes");
+    await expect(tens).toBeFocused();
+    await tens.press("ArrowDown");
+    await tens.press("ArrowDown");
+    await expect(tens).toHaveValue("2");
+    await page.getByRole("button", { name: "Override for 25 minutes" }).click();
 
     const dialog = page.getByRole("dialog", { name: "Are you sure?" });
     await expect(dialog).toBeVisible();
@@ -115,11 +113,11 @@ test("limits re-entry and grants a private override session", async () => {
     await expect(
       page.getByText("confirmation code does not match"),
     ).toBeVisible();
-    await expect(intention).toHaveValue(intentionText);
+    await expect(tens).toHaveValue("2");
 
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).toBeHidden();
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Override for 25 minutes" }).click();
     await expect(dialog).toBeVisible();
     const secondCode = await page.locator("#override-code").textContent();
     expect(secondCode).not.toBe(firstCode);
@@ -137,7 +135,7 @@ test("limits re-entry and grants a private override session", async () => {
         session: await chrome.storage.session.get(null),
       };
     });
-    expect(JSON.stringify(storedState)).not.toContain(intentionText);
+    expect(JSON.stringify(storedState)).not.toContain("intention");
   });
 });
 
@@ -157,12 +155,7 @@ test("override confirmation fails closed without its session challenge", async (
     await page.goto(primaryUrl());
     await makeEmergencyPauseReady(page);
     await page.reload();
-    await page
-      .getByLabel("What do you intend to do?")
-      .fill(
-        "Open the expected account message, respond only if required, then leave.",
-      );
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Override for 5 minutes" }).click();
     const code = await page.locator("#override-code").textContent();
 
     await options.evaluate(async () => {
@@ -432,12 +425,12 @@ test("popup opens a durable prefilled setup flow", async () => {
       popup.getByRole("heading", { name: "127.0.0.1" }),
     ).toBeVisible();
     const setupPagePromise = context.waitForEvent("page");
-    await popup.getByRole("button", { name: "Set visit budget…" }).click();
+    await popup.getByRole("button", { name: "Set a budget…" }).click();
     const setup = await setupPagePromise;
     await setup.waitForLoadState();
     await expect(
       setup.getByRole("heading", {
-        name: "Set visit budget",
+        name: "Set a budget",
       }),
     ).toBeVisible();
     await expect(setup.locator("#website")).toHaveValue("127.0.0.1");

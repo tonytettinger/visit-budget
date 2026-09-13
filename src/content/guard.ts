@@ -161,7 +161,6 @@ function renderGate(
         width: 100%;
       }
       input:focus { border-color: #155de0; box-shadow: 0 0 0 3px #eaf1ff; outline: none; }
-      .intention-meta { color: #5f6673; display: flex; font-size: 11px; justify-content: space-between; }
       .actions { display: grid; gap: 10px; }
       button {
         border: 1px solid #155de0;
@@ -175,8 +174,12 @@ function renderGate(
       .secondary { background: #fff; color: #155de0; }
       button:disabled { cursor: not-allowed; opacity: 0.45; }
       button:focus-visible { box-shadow: 0 0 0 3px #cddfff; outline: none; }
-      .pass-note, .error { color: #5f6673; font-size: 13px; line-height: 1.5; margin: 16px 0 0; }
+      .override-warning { font-size: 16px; font-weight: 750; margin: 22px 0 6px; }
+      .pass-note, .error { color: #5f6673; font-size: 13px; line-height: 1.5; margin: 0; }
       .pause-countdown { color: #155de0; font-size: 13px; font-weight: 650; line-height: 1.5; margin: 8px 0 0; }
+      .duration-picker { align-items: center; display: flex; gap: 6px; margin-top: 8px; }
+      .duration-picker select { border: 1px solid #c9ced9; border-radius: 8px; color: #17191f; font: 700 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 44px; padding: 0 8px; }
+      .duration-picker span { color: #5f6673; font-size: 13px; }
       .error { color: #9a2f20; min-height: 20px; }
       dialog { background: transparent; border: 0; max-width: 430px; padding: 0; width: calc(100% - 32px); }
       dialog::backdrop { background: rgba(23, 25, 31, 0.42); }
@@ -210,7 +213,9 @@ function renderGate(
   const title = requiredElement<HTMLElement>(shadow, "h1");
   title.textContent = isPermanent
     ? "This website is blocked"
-    : "You've used today's visit budget";
+    : context.rule.mode === "time-limit"
+      ? "You've used today's time budget"
+      : "You've used today's visit budget";
   requiredElement<HTMLElement>(shadow, ".site").textContent =
     context.rule.hostname;
   requiredElement<HTMLElement>(shadow, ".reset").textContent =
@@ -235,18 +240,22 @@ function renderOverrideForm(
   context: Extract<BlockedContext, { kind: "active-block" }>,
 ): void {
   area.innerHTML = `
-    <p class="pass-note">Need access anyway? Pause for 15 seconds, then describe what you intend to do in at least 50 characters. A confirmed override lasts 10 minutes.</p>
+    <p class="override-warning">Before you override</p>
+    <p class="pass-note">Take a moment before reopening this site. If you continue, choose the shortest amount of temporary access you need.</p>
     <p class="pause-countdown" role="status" aria-live="polite"></p>
-    <label for="visit-budget-intention">What do you intend to do?</label>
-    <textarea id="visit-budget-intention" maxlength="240" inputmode="text" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="For example: reply to one email, then leave"></textarea>
-    <div class="intention-meta"><span>Your intention is not saved.</span><span class="intention-count">0 / 50</span></div>
+    <label id="visit-budget-duration-label">Temporary access</label>
+    <div class="duration-picker" role="group" aria-labelledby="visit-budget-duration-label">
+      <select class="duration-tens" aria-label="Tens of minutes"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
+      <select class="duration-ones" aria-label="Ones of minutes"><option value="0">0</option><option value="5" selected>5</option></select>
+      <span>minutes</span>
+    </div>
     <div class="actions" style="margin-top: 10px">
       <button class="secondary override" type="button" disabled></button>
     </div>
     <dialog aria-labelledby="visit-budget-confirmation-title" aria-describedby="visit-budget-confirmation-description">
       <div class="confirmation-panel">
         <h2 id="visit-budget-confirmation-title">Are you sure?</h2>
-        <p id="visit-budget-confirmation-description">Type this code exactly to start 10 minutes of access.</p>
+        <p id="visit-budget-confirmation-description">Type this code exactly to start temporary access.</p>
         <output class="confirmation-code"></output>
         <label for="visit-budget-confirmation-code">Confirmation code</label>
         <input id="visit-budget-confirmation-code" type="text" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -258,14 +267,14 @@ function renderOverrideForm(
       </div>
     </dialog>
   `;
-  const input = requiredElement<HTMLTextAreaElement>(shadow, "textarea");
+  const tens = requiredElement<HTMLSelectElement>(shadow, ".duration-tens");
+  const ones = requiredElement<HTMLSelectElement>(shadow, ".duration-ones");
   const button = requiredElement<HTMLButtonElement>(shadow, ".override");
   const error = requiredElement<HTMLElement>(shadow, ".gate-error");
   const pauseCountdown = requiredElement<HTMLElement>(
     shadow,
     ".pause-countdown",
   );
-  const count = requiredElement<HTMLElement>(shadow, ".intention-count");
   const dialog = requiredElement<HTMLDialogElement>(shadow, "dialog");
   const codeOutput = requiredElement<HTMLElement>(shadow, ".confirmation-code");
   const codeInput = requiredElement<HTMLInputElement>(
@@ -287,7 +296,11 @@ function renderOverrideForm(
       0,
       Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
     );
-    button.textContent = seconds > 0 ? `Continue (${seconds}s)` : "Continue";
+    const durationMinutes = selectedDurationMinutes(tens, ones);
+    button.textContent =
+      seconds > 0
+        ? `Override (${seconds}s)`
+        : `Override for ${durationMinutes} minutes`;
     if (seconds !== previousPauseSeconds) {
       pauseCountdown.textContent =
         seconds > 0
@@ -295,26 +308,30 @@ function renderOverrideForm(
           : "The pause is complete. You can continue when ready.";
       previousPauseSeconds = seconds;
     }
-    const intentionLength = input.value.trim().length;
-    count.textContent = `${intentionLength} / 50`;
-    button.disabled = seconds > 0 || intentionLength < 50;
+    button.disabled = seconds > 0 || !isValidDuration(durationMinutes);
     if (seconds === 0) {
       clearInterval(timer);
     }
   };
   const timer = window.setInterval(update, 250);
-  input.addEventListener("input", update);
-  input.focus();
+  tens.addEventListener("change", update);
+  ones.addEventListener("change", update);
+  tens.focus();
   button.addEventListener("click", () => {
     button.disabled = true;
     error.textContent = "";
     void sendRequest<OverrideConfirmationResult>({
       type: "START_OVERRIDE_CONFIRMATION",
       ruleId: context.rule.id,
-      intention: input.value,
+      durationMinutes: selectedDurationMinutes(tens, ones),
     })
       .then((result) => {
         codeOutput.textContent = result.code;
+        requiredElement<HTMLElement>(
+          shadow,
+          "#visit-budget-confirmation-description",
+        ).textContent =
+          `Type this code exactly to start ${selectedDurationMinutes(tens, ones)} minutes of temporary access.`;
         codeInput.value = "";
         confirmationError.textContent = "";
         dialog.showModal();
@@ -352,7 +369,7 @@ function renderOverrideForm(
     void sendRequest<OverrideSessionResult>({
       type: "CONFIRM_OVERRIDE",
       ruleId: context.rule.id,
-      intention: input.value,
+      durationMinutes: selectedDurationMinutes(tens, ones),
       code: codeInput.value,
     })
       .then(() => {
@@ -360,7 +377,10 @@ function renderOverrideForm(
         dialog.close();
         removeGate();
         removeCurtain();
-        showOverrideToast(context.rule.hostname);
+        showOverrideToast(
+          context.rule.hostname,
+          selectedDurationMinutes(tens, ones),
+        );
       })
       .catch((caught: unknown) => {
         confirmationError.textContent = errorMessage(caught);
@@ -388,15 +408,28 @@ function showEntryReceiptToast(receipt: EntryReceipt): void {
   });
 }
 
-function showOverrideToast(hostname: string): void {
+function showOverrideToast(hostname: string, durationMinutes: number): void {
   showToast({
-    ariaLabel: `${hostname}: an override session is active for 10 minutes.`,
-    detail: "Override access is active for 10 minutes",
+    ariaLabel: `${hostname}: an override session is active for ${durationMinutes} minutes.`,
+    detail: `Override access is active for ${durationMinutes} minutes`,
     headline: "Override active",
     hostname,
     progress: 100,
-    ringLabel: "10m",
+    ringLabel: `${durationMinutes}m`,
   });
+}
+
+function selectedDurationMinutes(
+  tens: HTMLSelectElement,
+  ones: HTMLSelectElement,
+): number {
+  return Number(tens.value) * 10 + Number(ones.value);
+}
+
+function isValidDuration(durationMinutes: number): boolean {
+  return (
+    durationMinutes >= 5 && durationMinutes <= 60 && durationMinutes % 5 === 0
+  );
 }
 
 interface ToastContent {

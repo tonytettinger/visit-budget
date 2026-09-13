@@ -1,9 +1,10 @@
 import { localDateKey } from "./date";
 import type { DailyUsage, EntryDecision, RuleStatus, SiteRule } from "./types";
 
-export const OVERRIDE_SESSION_DURATION_MS = 10 * 60 * 1000;
 export const OVERRIDE_PAUSE_SECONDS = 15;
-export const MINIMUM_INTENTION_LENGTH = 50;
+export const MINIMUM_OVERRIDE_DURATION_MINUTES = 5;
+export const MAXIMUM_OVERRIDE_DURATION_MINUTES = 60;
+export const OVERRIDE_DURATION_STEP_MINUTES = 5;
 
 export function createDailyUsage(ruleId: string, now: Date): DailyUsage {
   return {
@@ -180,35 +181,49 @@ export function settleActiveTime(
 export function startOverrideSession(
   rule: SiteRule,
   existingUsage: DailyUsage | undefined,
-  intention: string,
+  durationMinutes: number,
   now: Date,
 ): DailyUsage {
-  const usage = validateOverrideRequest(rule, existingUsage, intention, now);
+  const usage = validateOverrideRequest(
+    rule,
+    existingUsage,
+    durationMinutes,
+    now,
+  );
   return {
     ...usage,
-    overrideSessionExpiresAt: now.getTime() + OVERRIDE_SESSION_DURATION_MS,
+    overrideSessionExpiresAt: now.getTime() + durationMinutes * 60_000,
   };
 }
 
 export function validateOverrideRequest(
   rule: SiteRule,
   existingUsage: DailyUsage | undefined,
-  intention: string,
+  durationMinutes: number,
   now: Date,
 ): DailyUsage {
-  if (intention.trim().length < MINIMUM_INTENTION_LENGTH) {
+  if (
+    !Number.isInteger(durationMinutes) ||
+    durationMinutes < MINIMUM_OVERRIDE_DURATION_MINUTES ||
+    durationMinutes > MAXIMUM_OVERRIDE_DURATION_MINUTES ||
+    durationMinutes % OVERRIDE_DURATION_STEP_MINUTES !== 0
+  ) {
     throw new Error(
-      `Write at least ${MINIMUM_INTENTION_LENGTH} characters before continuing.`,
+      `Choose an override between ${MINIMUM_OVERRIDE_DURATION_MINUTES} and ${MAXIMUM_OVERRIDE_DURATION_MINUTES} minutes.`,
     );
   }
-  if (rule.mode !== "visit-limit") {
+  if (rule.mode === "permanent-block") {
     throw new Error("Permanent blocks do not have an emergency override.");
   }
 
   const usage = currentUsage(rule.id, existingUsage, now);
-  const limit = rule.dailyLimit ?? 1;
-  if (usage.visitsUsed < limit) {
-    throw new Error("The daily visit budget is not exhausted.");
+  if (rule.mode === "visit-limit") {
+    const limit = rule.dailyLimit ?? 1;
+    if (usage.visitsUsed < limit) {
+      throw new Error("The daily visit budget is not exhausted.");
+    }
+  } else if (remainingActiveTimeMs(rule, usage) > 0) {
+    throw new Error("The daily time budget is not exhausted.");
   }
   return usage;
 }

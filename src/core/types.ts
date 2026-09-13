@@ -40,6 +40,7 @@ export interface EntryReceipt {
 
 export interface OverrideChallenge {
   issuedAt: number;
+  durationMinutes?: number;
   code?: string;
   codeIssuedAt?: number;
   previousCode?: string;

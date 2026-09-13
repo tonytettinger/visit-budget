@@ -822,6 +822,50 @@ textarea {
   margin: 8px 0 12px;
 }
 
+.override-warning {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  margin: 4px 0 6px;
+}
+
+.override-duration {
+  margin: 16px 0 4px;
+  text-align: left;
+}
+
+.override-duration > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.duration-picker {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.duration-picker select {
+  appearance: auto;
+  background: var(--background);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  min-height: 46px;
+  padding: 0 8px;
+}
+
+.duration-picker span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .blocked-panel hr {
   border: 0;
   border-top: 1px solid var(--border);
@@ -843,20 +887,6 @@ textarea {
   border-top: 1px solid var(--border);
   margin-top: 18px;
   padding-top: 18px;
-}
-
-.intention-field {
-  margin: 4px 0;
-  text-align: left;
-}
-
-.intention-meta {
-  color: var(--muted);
-  display: flex;
-  font-size: 11px;
-  font-weight: 400;
-  justify-content: space-between;
-  margin-top: 6px;
 }
 
 .confirmation-dialog {

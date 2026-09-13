@@ -7,7 +7,7 @@ describe("extension message validation", () => {
       isClientRequest({
         type: "CONFIRM_OVERRIDE",
         ruleId: "rule-1",
-        intention: "a".repeat(50),
+        durationMinutes: 25,
         code: "XyZ91",
       }),
     ).toBe(true);
@@ -17,7 +17,7 @@ describe("extension message validation", () => {
       isClientRequest({
         type: "CONFIRM_OVERRIDE",
         ruleId: "rule-1",
-        intention: "a".repeat(50),
+        durationMinutes: 25,
         code: "1234",
       }),
     ).toBe(false);
@@ -25,9 +25,25 @@ describe("extension message validation", () => {
       isClientRequest({
         type: "START_OVERRIDE_CONFIRMATION",
         ruleId: "rule-1",
-        intention: "a".repeat(241),
+        durationMinutes: 25.5,
       }),
     ).toBe(false);
+    expect(
+      isClientRequest({
+        type: "SAVE_RULE",
+        rule: {
+          id: "rule-1",
+          hostname: "example.com",
+          includeSubdomains: true,
+          includePathPrefixes: ["/"],
+          excludePathPrefixes: [],
+          mode: "time-limit",
+          dailyTimeLimitMinutes: 30,
+          countTabReturns: false,
+          dailyLockEnabled: false,
+        },
+      }),
+    ).toBe(true);
     expect(
       isClientRequest({
         type: "SAVE_RULE",

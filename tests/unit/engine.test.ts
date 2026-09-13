@@ -1,6 +1,6 @@
 import {
-  MINIMUM_INTENTION_LENGTH,
-  OVERRIDE_SESSION_DURATION_MS,
+  MAXIMUM_OVERRIDE_DURATION_MINUTES,
+  MINIMUM_OVERRIDE_DURATION_MINUTES,
   evaluateEntry,
   getRuleStatus,
   settleActiveTime,
@@ -89,24 +89,17 @@ describe("visit decisions", () => {
 });
 
 describe("emergency overrides", () => {
-  const intention = "Check one important email, reply if needed, then leave.";
-
-  it("requires a 50-character intention and an exhausted budget", () => {
+  it("requires a valid duration and an exhausted budget", () => {
     expect(() =>
       startOverrideSession(
         limitedRule(),
         usage({ visitsUsed: 2 }),
-        "a".repeat(MINIMUM_INTENTION_LENGTH - 1),
+        MINIMUM_OVERRIDE_DURATION_MINUTES - 1,
         now,
       ),
-    ).toThrow("at least 50 characters");
+    ).toThrow("Choose an override");
     expect(() =>
-      startOverrideSession(
-        limitedRule(),
-        usage({ visitsUsed: 1 }),
-        intention,
-        now,
-      ),
+      startOverrideSession(limitedRule(), usage({ visitsUsed: 1 }), 10, now),
     ).toThrow("not exhausted");
   });
 
@@ -117,25 +110,18 @@ describe("emergency overrides", () => {
     } as SiteRule;
     delete permanentRule.dailyLimit;
     expect(() =>
-      startOverrideSession(
-        permanentRule,
-        usage({ visitsUsed: 2 }),
-        intention,
-        now,
-      ),
+      startOverrideSession(permanentRule, usage({ visitsUsed: 2 }), 10, now),
     ).toThrow("Permanent blocks do not have an emergency override");
   });
 
-  it("grants a ten-minute override session and reports active access", () => {
+  it("grants the selected override duration and reports active access", () => {
     const granted = startOverrideSession(
       limitedRule(),
       usage({ visitsUsed: 2 }),
-      intention,
+      25,
       now,
     );
-    expect(granted.overrideSessionExpiresAt).toBe(
-      now.getTime() + OVERRIDE_SESSION_DURATION_MS,
-    );
+    expect(granted.overrideSessionExpiresAt).toBe(now.getTime() + 25 * 60_000);
     expect(getRuleStatus(limitedRule(), granted, now).kind).toBe(
       "override-session",
     );
@@ -154,12 +140,42 @@ describe("emergency overrides", () => {
     const repeated = startOverrideSession(
       limitedRule(),
       expired,
-      intention,
+      MAXIMUM_OVERRIDE_DURATION_MINUTES,
       now,
     );
     expect(repeated.overrideSessionExpiresAt).toBe(
-      now.getTime() + OVERRIDE_SESSION_DURATION_MS,
+      now.getTime() + MAXIMUM_OVERRIDE_DURATION_MINUTES * 60_000,
     );
+  });
+
+  it("allows a time-budget override only after its allowance is used", () => {
+    const rule = timeLimitedRule();
+    expect(() =>
+      startOverrideSession(
+        rule,
+        {
+          ruleId: rule.id,
+          localDate: "2026-07-05",
+          visitsUsed: 0,
+          activeTimeUsedMs: 29 * 60_000,
+        },
+        5,
+        now,
+      ),
+    ).toThrow("time budget is not exhausted");
+
+    const granted = startOverrideSession(
+      rule,
+      {
+        ruleId: rule.id,
+        localDate: "2026-07-05",
+        visitsUsed: 0,
+        activeTimeUsedMs: 30 * 60_000,
+      },
+      5,
+      now,
+    );
+    expect(granted.overrideSessionExpiresAt).toBe(now.getTime() + 5 * 60_000);
   });
 });
 

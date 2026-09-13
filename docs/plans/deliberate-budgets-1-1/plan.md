@@ -49,7 +49,7 @@ Checkpoint: no
 
 ## Phase 3 — Make the boundary and override flow understandable
 
-Status: todo
+Status: in review
 
 Checkpoint: yes — settings clearly choose visit budget, time budget, or block;
 an exhausted rule presents the prominent pause countdown, keyboard-operable

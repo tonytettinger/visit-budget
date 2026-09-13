@@ -19,13 +19,13 @@ export type ClientRequest =
   | {
       type: "START_OVERRIDE_CONFIRMATION";
       ruleId: string;
-      intention: string;
+      durationMinutes: number;
     }
   | { type: "CANCEL_OVERRIDE_CONFIRMATION"; ruleId: string }
   | {
       type: "CONFIRM_OVERRIDE";
       ruleId: string;
-      intention: string;
+      durationMinutes: number;
       code: string;
     };
 
@@ -167,8 +167,8 @@ export function isClientRequest(value: unknown): value is ClientRequest {
 function isOverrideRequest(value: Record<string, unknown>): boolean {
   return (
     typeof value.ruleId === "string" &&
-    typeof value.intention === "string" &&
-    value.intention.length <= 240
+    typeof value.durationMinutes === "number" &&
+    Number.isInteger(value.durationMinutes)
   );
 }
 
@@ -182,10 +182,15 @@ function isSiteRule(value: unknown): value is SiteRule {
     typeof value.includeSubdomains === "boolean" &&
     isStringArray(value.includePathPrefixes) &&
     isStringArray(value.excludePathPrefixes) &&
-    (value.mode === "visit-limit" || value.mode === "permanent-block") &&
+    (value.mode === "visit-limit" ||
+      value.mode === "time-limit" ||
+      value.mode === "permanent-block") &&
     (value.dailyLimit === undefined ||
       (typeof value.dailyLimit === "number" &&
         Number.isInteger(value.dailyLimit))) &&
+    (value.dailyTimeLimitMinutes === undefined ||
+      (typeof value.dailyTimeLimitMinutes === "number" &&
+        Number.isInteger(value.dailyTimeLimitMinutes))) &&
     typeof value.countTabReturns === "boolean" &&
     typeof value.dailyLockEnabled === "boolean"
   );

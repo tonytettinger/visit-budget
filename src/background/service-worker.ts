@@ -277,14 +277,17 @@ async function handleRequest(
       return { cancelled: true };
     }
     case "START_OVERRIDE_CONFIRMATION":
-      return await startOverrideConfirmation(request.ruleId, request.intention);
+      return await startOverrideConfirmation(
+        request.ruleId,
+        request.durationMinutes,
+      );
     case "CANCEL_OVERRIDE_CONFIRMATION":
       await cancelOverrideConfirmation(request.ruleId);
       return { cancelled: true };
     case "CONFIRM_OVERRIDE":
       return await confirmOverride(
         request.ruleId,
-        request.intention,
+        request.durationMinutes,
         request.code,
       );
   }
@@ -739,7 +742,7 @@ async function getBlockedContext(ruleId: string): Promise<BlockedContext> {
 
 async function startOverrideConfirmation(
   ruleId: string,
-  intention: string,
+  durationMinutes: number,
 ): Promise<{ code: string }> {
   const now = new Date();
   const state = await loadState(now);
@@ -753,13 +756,19 @@ async function startOverrideConfirmation(
     throw new Error("The 15-second pause is still in progress.");
   }
 
-  validateOverrideRequest(rule, state.usageByRule[rule.id], intention, now);
+  validateOverrideRequest(
+    rule,
+    state.usageByRule[rule.id],
+    durationMinutes,
+    now,
+  );
   const previousCode = challenge.code ?? challenge.previousCode;
   const code = generateOverrideCode(previousCode);
   const challenges = {
     ...(session.overrideChallengeByRule ?? {}),
     [ruleId]: {
       issuedAt: challenge.issuedAt,
+      durationMinutes,
       code,
       codeIssuedAt: now.getTime(),
       ...(previousCode ? { previousCode } : {}),
@@ -789,7 +798,7 @@ async function cancelOverrideConfirmation(ruleId: string): Promise<void> {
 
 async function confirmOverride(
   ruleId: string,
-  intention: string,
+  durationMinutes: number,
   code: string,
 ): Promise<{ expiresAt: number }> {
   const now = new Date();
@@ -807,11 +816,14 @@ async function confirmOverride(
   if (code !== challenge.code) {
     throw new Error("The confirmation code does not match.");
   }
+  if (challenge.durationMinutes !== durationMinutes) {
+    throw new Error("Choose a duration and start a new confirmation.");
+  }
 
   const usage = startOverrideSession(
     rule,
     state.usageByRule[rule.id],
-    intention,
+    durationMinutes,
     now,
   );
   state.usageByRule[rule.id] = usage;

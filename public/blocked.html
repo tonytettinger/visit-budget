@@ -27,10 +27,10 @@
         </div>
 
         <section id="override-section" hidden>
+          <p class="override-warning">Before you override</p>
           <p class="pass-note">
-            Need access anyway? Pause for 15 seconds, then describe what you
-            intend to do in at least 50 characters. A confirmed override lasts
-            10 minutes.
+            Take a moment before reopening this site. If you continue, choose
+            the shortest amount of temporary access you need.
           </p>
           <p
             class="pause-countdown"
@@ -38,30 +38,36 @@
             role="status"
             aria-live="polite"
           ></p>
-          <label class="field intention-field">
-            <span>What do you intend to do?</span>
-            <textarea
-              id="intention"
-              rows="3"
-              maxlength="240"
-              inputmode="text"
-              autocomplete="off"
-              autocapitalize="sentences"
-              spellcheck="true"
-              placeholder="For example: reply to one email, then leave"
-            ></textarea>
-            <span class="intention-meta">
-              <span>Your intention is not saved.</span>
-              <span id="intention-count">0 / 50</span>
-            </span>
-          </label>
+          <div
+            class="override-duration"
+            role="group"
+            aria-labelledby="override-duration-label"
+          >
+            <span id="override-duration-label">Temporary access</span>
+            <div class="duration-picker">
+              <select id="override-tens" aria-label="Tens of minutes">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+              <select id="override-ones" aria-label="Ones of minutes">
+                <option value="0">0</option>
+                <option value="5" selected>5</option>
+              </select>
+              <span>minutes</span>
+            </div>
+          </div>
           <button
             class="button secondary"
             id="continue-override"
             type="button"
             disabled
           >
-            Continue
+            Override for 5 minutes
           </button>
         </section>
         <p class="form-error centered" id="blocked-error" role="alert"></p>
@@ -75,7 +81,7 @@
           <div class="confirmation-panel">
             <h2 id="confirmation-title">Are you sure?</h2>
             <p id="confirmation-description">
-              Type this code exactly to start 10 minutes of access.
+              Type this code exactly to start temporary access.
             </p>
             <output class="confirmation-code" id="override-code"></output>
             <label class="field">
