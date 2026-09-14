@@ -1,23 +1,6 @@
 # Roadmap — Visit Budget
 
-Last updated: 2026-09-13
-
-## Milestone: Deliberate budgets 1.1
-
-Outcome: Users can choose one understandable daily boundary for a site—visits,
-active time, or a permanent block—then take necessary temporary access without
-turning the guard into a text-completion exercise.
-
-- Replace the written override gate with a bounded duration picker — retain the
-  pause and code confirmation while removing filler text · plan:
-  `docs/plans/deliberate-budgets-1-1/plan.md`
-- Clarify optional tab-return counting in rule controls — make the stricter
-  behaviour an informed per-rule choice, not a surprise · plan:
-  `docs/plans/deliberate-budgets-1-1/plan.md`
-- Add a per-rule choice between a daily visit budget and daily active-time
-  budget — active time counts only in a selected tab in focused Chrome and does
-  not become remote productivity surveillance · plan:
-  `docs/plans/deliberate-budgets-1-1/plan.md`
+Last updated: 2026-09-14
 
 ## Milestone: Optional premium upgrade
 
@@ -45,6 +28,12 @@ budget and permanent blocking remain intact.
   speculative feature bundling · from: user
 
 ## Shipped
+
+- Deliberate budgets 1.1 — per-site visit, active-time, or permanent
+  boundaries, with a 15-second pause, 5–60 minute temporary-access stepper,
+  and code confirmation · 2026-09-14 · changelog: [feature] Add active-time
+  budgets and deliberate overrides · plan:
+  `docs/plans/deliberate-budgets-1-1/plan.md`
 
 - Deliberate friction controls — optional per-rule tab-return counting plus
   repeatable, private, code-confirmed emergency overrides · 2026-08-21 ·

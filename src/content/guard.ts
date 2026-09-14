@@ -251,7 +251,7 @@ function renderOverrideForm(
     <label id="visit-budget-duration-label">Temporary access</label>
     <div class="duration-picker" role="group" aria-labelledby="visit-budget-duration-label">
       <button class="decrease-duration" type="button" aria-label="Decrease temporary access by 5 minutes">−</button>
-      <div class="duration-value" role="spinbutton" tabindex="0" aria-valuemin="5" aria-valuemax="60" aria-valuenow="5" aria-valuetext="5 minutes">5 min</div>
+      <div class="duration-value" role="spinbutton" tabindex="0" aria-label="Temporary access" aria-valuemin="5" aria-valuemax="60" aria-valuenow="5" aria-valuetext="5 minutes">5 min</div>
       <button class="increase-duration" type="button" aria-label="Increase temporary access by 5 minutes">+</button>
     </div>
     <div class="actions" style="margin-top: 10px">

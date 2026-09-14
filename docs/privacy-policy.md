@@ -1,6 +1,6 @@
 # Visit Budget privacy policy
 
-Last updated: 2026-08-21
+Last updated: 2026-09-14
 
 ## Summary
 
@@ -11,22 +11,23 @@ backend, analytics, advertising, or telemetry, and it does not sell data.
 
 Visit Budget stores the following information in Chrome storage:
 
-- Rules you create, including hostnames, optional path scopes, visit limits,
-  permanent blocks, tab-return preferences, and daily-lock settings.
-- Daily usage state, including visits used and the expiry time of an active
-  10-minute override session.
+- Rules you create, including hostnames, optional path scopes, visit budgets,
+  active-time budgets, permanent blocks, tab-return preferences, and daily-lock
+  settings.
+- Daily usage state, including visits used or active time used and the expiry
+  time of an active override session.
 - Pending changes to rules protected by a daily lock.
 - Short-lived session state used to prevent double-counting, show reminders,
   preserve blocking state, and validate an override confirmation code.
 
-An emergency-override intention is used only in the blocked interface while you
-complete the confirmation flow. The intention is never saved to local or
-session storage, written to logs, analyzed, or transmitted.
+Visit Budget does not ask for a written reason when you use an emergency
+override. A short-lived local confirmation challenge is used only to validate
+the 15-second pause, chosen duration, and confirmation code.
 
 ## Information transmitted
 
 Visit Budget does not transmit your rules, visit counts, browsing activity,
-page content, settings, intentions, or confirmation codes to the developer or
+page content, settings, override challenges, or confirmation codes to the developer or
 to any third party. The extension contains no network client or remote code.
 
 ## Website access

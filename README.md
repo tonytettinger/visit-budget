@@ -1,8 +1,8 @@
 # Visit Budget
 
 Visit Budget is a personal-first Chrome extension that turns automatic website
-checking into a conscious choice. It limits how many times you may re-enter a
-site each day and can permanently block sites that you do not want to visit.
+checking into a conscious choice. Each site can have a daily visit budget, a
+daily active-time budget, or a permanent block.
 
 It is deliberate friction, not an unbreakable lock. You can still uninstall the
 extension, use another browser or profile, or change device-level settings.
@@ -13,8 +13,8 @@ to replace self-control.
 
 ### Definitions
 
-- **Rule:** A hostname and optional path scope configured as either a daily
-  visit limit or a permanent block.
+- **Rule:** A hostname and optional path scope configured as a daily visit
+  budget, daily active-time budget, or permanent block.
 - **Visit:** An allowed transition from an untracked or differently tracked
   page into a page matched by a rule.
 - **Re-entry:** Returning to a matched rule after visiting a page that does not
@@ -22,10 +22,12 @@ to replace self-control.
 - **Tab-return counting:** An optional per-rule setting that also counts
   returning to a matching tab after any other tab was active.
 - **Permanent block:** A rule that never allows entry and cannot be overridden.
-- **Emergency override:** A repeatable, 10-minute exception for a limited site.
-  Every override requires a 15-second pause, a private written intention of at
-  least 50 characters, and exact entry of a fresh five-character code in a
-  separate confirmation dialog.
+- **Emergency override:** A repeatable, temporary exception for an exhausted
+  visit or time budget. Every override requires a 15-second pause, a chosen
+  5–60-minute duration in five-minute steps, and exact entry of a fresh
+  five-character code in a separate confirmation dialog.
+- **Active time:** Time counted only while a matching tab is selected in the
+  focused Chrome window. It is not an estimate of attention or activity.
 - **Daily lock:** An optional commitment that keeps a rule unchanged until the
   next local-day reset. Edits or removal are scheduled for tomorrow.
 
@@ -42,8 +44,9 @@ to replace self-control.
 | Start Chrome with a limited site active           | Yes               |
 | Create a rule while its matching site is active   | Yes               |
 
-The first `N` visits are allowed. Entry `N + 1` is blocked. An allowed visit is
-not time-limited; an emergency override is.
+The first `N` visits are allowed. Entry `N + 1` is blocked. A time budget is
+spent only while its matching tab is selected in focused Chrome. An emergency
+override temporarily allows access without changing the underlying budget.
 
 ### Matching behavior
 
@@ -62,8 +65,8 @@ not time-limited; an emergency override is.
 
 Usage resets at local midnight. Correctness does not depend on Chrome firing an
 alarm at exactly midnight: every read and transition also checks the local date
-lazily. Emergency overrides expire after 10 minutes and do not reset or add to
-the daily visit budget.
+lazily. Emergency overrides expire after their chosen duration and do not reset
+or add to the underlying budget.
 
 When daily lock is enabled, the current rule remains effective through the day.
 A replacement or deletion is stored as a pending change and applied after the
@@ -74,7 +77,7 @@ current locked rule.
 
 Visit Budget has no account, server, telemetry, advertising, or remote code.
 Rules and daily usage remain in `chrome.storage.local` on the device. Override
-confirmation state is temporary, and the written intention is never persisted,
+confirmation state is temporary; no free-form reason is requested, persisted,
 logged, or transmitted.
 
 The extension requests:
@@ -102,12 +105,12 @@ for unconfigured sites are neither retained nor analyzed.
 
 V1 includes:
 
-- Daily visit limits and permanent blocks.
+- Daily visit budgets, active-time budgets, and permanent blocks.
 - Optional per-rule tab-return counting.
 - Domain, subdomain, included-path, and excluded-path matching.
 - Existing-tab protection.
-- Repeatable emergency overrides with a full pause, private intention, and code
-  confirmation every time.
+- Repeatable emergency overrides with a full pause, a 5–60-minute duration
+  stepper, and code confirmation every time.
 - Optional daily rule locks.
 - A toolbar popup, options page, blocked page, page-preserving overlay, and
   durable visit-receipt notification with circular daily progress.
@@ -122,11 +125,8 @@ V1 intentionally excludes:
 - Mobile browsers.
 - Cross-device synchronization.
 - Accounts, cloud services, analytics, or AI.
-- Time-spent limits and historical usage dashboards.
+- Historical usage dashboards, attention monitoring, or productivity scoring.
 - OS-, router-, or enterprise-level enforcement.
-- Chrome Web Store publication itself. Version 1.0.0 is prepared for submission,
-  but publication still requires a hosted privacy policy, listing assets, and
-  review in the Chrome Web Store Developer Dashboard.
 
 ## Acceptance criteria
 
@@ -144,12 +144,12 @@ V1 intentionally excludes:
 - “Leave for now” exits a newly blocked navigation without returning to the
   blocked URL.
 - A blocked overlay preserves the underlying page and unsaved form contents.
-- Every successful emergency override lasts exactly 10 minutes; expired access
-  requires the complete friction flow again.
+- Every successful emergency override lasts its chosen 5–60-minute duration;
+  expired access requires the complete friction flow again.
 - Wrong, cancelled, expired, or manually altered override confirmations fail
   closed and grant no access.
-- Written intentions never enter local storage, session storage, logs, or
-  network requests.
+- No free-form override reason, browsing data, or page content is collected or
+  sent off-device.
 - Local-midnight reset and queued locked changes work after browser sleep or
   service-worker restart.
 - No user browsing data is transmitted off-device.

@@ -23,6 +23,17 @@ export default tseslint.config(
     },
   },
   {
+    files: ["docs/atlas/**/*.js"],
+    languageOptions: {
+      globals: {
+        IntersectionObserver: "readonly",
+        document: "readonly",
+        localStorage: "readonly",
+        window: "readonly",
+      },
+    },
+  },
+  {
     files: ["**/*.ts"],
     extends: [
       ...tseslint.configs.strictTypeChecked,

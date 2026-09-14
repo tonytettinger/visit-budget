@@ -1,6 +1,6 @@
-# Security and privacy review — Visit Budget 1.0.0
+# Security and privacy review — Visit Budget 1.1.0
 
-Reviewed: 2026-08-21
+Reviewed: 2026-09-14
 
 ## Result
 
@@ -17,7 +17,7 @@ guard, bundled executable code, development dependencies, and release ZIP.
 
 The relevant risks are unnecessary browsing access, unintended data transfer,
 remote-code execution, forged or malformed extension messages, unsafe redirects,
-accidental persistence of an override intention, and packaging development
+accidental persistence of browsing data or override state, and packaging development
 artifacts. Visit Budget is not intended to withstand uninstalling the extension,
 using another browser or profile, or a user deliberately disabling Chrome-level
 controls.
@@ -34,8 +34,8 @@ controls.
 - Blocked-page return targets must be HTTP or HTTPS and must match the active
   rule; edited, cross-site, or script-scheme targets fall back safely.
 - Override confirmation challenges are short-lived and kept in session storage.
-  Written intentions remain in interface memory and never enter storage, logs,
-  or messages that persist them.
+  The extension does not request a written override reason; only the selected
+  duration and resulting local expiry are used to grant temporary access.
 - Permanent blocks reject override requests at the core decision boundary even
   if a request is forged.
 - Production builds omit source maps. The release validator checks manifest
@@ -72,7 +72,7 @@ npm run test:e2e
 npm run package
 ```
 
-`npm run package` creates `artifacts/visit-budget-v1.0.0.zip` and its checksum.
+`npm run package` creates `artifacts/visit-budget-v1.1.0.zip` and its checksum.
 Continuous integration repeats the checks with Node.js 22 and Playwright
 Chromium.
 

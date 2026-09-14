@@ -606,14 +606,14 @@ function exhaustActiveTimeIfNeeded(
   const rule = state.rules.find(
     (candidate) => candidate.id === session.activeRuleId,
   );
-  if (!rule || rule.mode !== "time-limit") {
+  if (rule?.mode !== "time-limit") {
     return session;
   }
   const status = getRuleStatus(rule, state.usageByRule[rule.id], now);
   if (status.kind !== "limit-reached") {
     return session;
   }
-  const next = { ...session, activeAccess: "blocked" };
+  const next: SessionState = { ...session, activeAccess: "blocked" };
   delete next.activeRemaining;
   delete next.activeTimeStartedAt;
   return next;

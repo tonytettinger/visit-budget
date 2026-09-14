@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Visit Budget",
-  "version": "1.0.0",
-  "description": "Make automatic website re-checking a conscious choice with daily visit budgets and private, local-only blocking.",
+  "version": "1.1.0",
+  "description": "Make website checking deliberate with visit budgets, active-time limits, and permanent blocks.",
   "minimum_chrome_version": "120",
   "permissions": [
     "activeTab",

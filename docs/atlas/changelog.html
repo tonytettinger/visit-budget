@@ -23,10 +23,29 @@
       <section id="changes">
         <div class="sec-head">
           <h2>Latest changes</h2>
-          <span class="stamp">2026-09-13</span>
+          <span class="stamp">2026-09-14</span>
         </div>
         <!-- BEGIN:content -->
         <div class="log">
+          <article>
+            <span class="date">2026-09-14</span>
+            <span class="badge">feature</span>
+            <h3>Add active-time budgets and deliberate overrides</h3>
+            <p>
+              <span class="label">What</span> — each configured site can use a
+              daily visit budget, daily active-time budget, or permanent block.
+            </p>
+            <p>
+              <span class="label">Why</span> — repeated checking and focused
+              time need different boundaries, while necessary access should
+              remain possible without becoming effortless.
+            </p>
+            <p>
+              <span class="label">How</span> — the service worker counts only
+              selected, focused-tab time; exhausted budgets use a visible pause,
+              5–60 minute stepper, and fresh confirmation code.
+            </p>
+          </article>
           <article>
             <span class="date">2026-08-21</span> <span class="badge">fix</span>
             <h3>Clarify emergency-override pause and recovery</h3>

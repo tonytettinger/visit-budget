@@ -1,6 +1,26 @@
 # Changelog
 
-## Unreleased
+## v1.1.0 — 2026-09-14
+
+### [feature] Add active-time budgets and deliberate overrides — 2026-09-14
+
+- What: each website can now use a daily visit budget, a 15-minute to four-hour
+  active-time budget, or a permanent block.
+- Why: a visit count is useful for repeated checking, but some sites need a
+  boundary around focused time instead; necessary access should stay possible
+  without being effortless.
+- How: the service worker settles time only while a matching tab is selected in
+  focused Chrome. Exhausted visit and time budgets use a visible 15-second
+  pause, a 5–60 minute stepper, and a fresh confirmation code; no written
+  reason is collected or retained.
+- UX: the rule editor makes the three boundaries distinct, explains tab-return
+  counting as a visit-only choice, and shows active time remaining. Permanent
+  blocks still have no override.
+- Practices:
+  - Strict type checks, 33 unit tests, and 10 end-to-end journeys cover the
+    transition, enforcement, recovery, and existing-tab behaviour.
+  - The production package is validated for its manifest, archive contents,
+    dynamic-code and network primitives, and dependency vulnerabilities.
 
 ### [fix] Clarify emergency-override pause and recovery — 2026-08-21
 

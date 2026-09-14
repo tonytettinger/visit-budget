@@ -51,8 +51,15 @@ test("limits re-entry and grants a private override session", async () => {
       limit: 1,
     });
     if (process.env.CAPTURE_QA) {
+      await addRule(options, extensionId, {
+        website: "127.0.0.2",
+        mode: "time-limit",
+        timeLimit: 30,
+      });
       await options.reload();
-      await expect(options.getByText("127.0.0.1")).toBeVisible();
+      await expect(options.getByText("127.0.0.2")).toBeVisible();
+      await options.getByRole("button", { name: /127\.0\.0\.2/ }).click();
+      await expect(options.locator("#daily-time-limit")).toBeVisible();
       await options.setViewportSize({ width: 1280, height: 800 });
       await options.screenshot({
         path: "/tmp/visit-budget-options.png",
@@ -83,23 +90,41 @@ test("limits re-entry and grants a private override session", async () => {
         name: "You've used today's visit budget",
       }),
     ).toBeVisible();
+    if (process.env.CAPTURE_QA) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.screenshot({
+        path: "/tmp/visit-budget-blocked.png",
+        fullPage: false,
+      });
+    }
 
     await expect(page.locator("#pause-countdown")).toHaveText(
       /You can continue in \d+ seconds\.|The pause is complete\./,
     );
     await makeEmergencyPauseReady(page);
     await page.reload();
-    const tens = page.getByLabel("Tens of minutes");
-    await expect(tens).toBeFocused();
-    await tens.press("ArrowDown");
-    await tens.press("ArrowDown");
-    await expect(tens).toHaveValue("2");
+    const duration = page.getByRole("spinbutton", {
+      name: "Temporary access",
+    });
+    await expect(duration).toBeFocused();
+    await duration.press("ArrowUp");
+    await duration.press("ArrowUp");
+    await duration.press("ArrowUp");
+    await duration.press("ArrowUp");
+    await expect(duration).toHaveAttribute("aria-valuenow", "25");
+    if (process.env.CAPTURE_QA) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.screenshot({
+        path: "/tmp/visit-budget-stepper.png",
+        fullPage: false,
+      });
+    }
     await page.getByRole("button", { name: "Override for 25 minutes" }).click();
 
     const dialog = page.getByRole("dialog", { name: "Are you sure?" });
     await expect(dialog).toBeVisible();
     if (process.env.CAPTURE_QA) {
-      await page.setViewportSize({ width: 900, height: 760 });
+      await page.setViewportSize({ width: 1280, height: 800 });
       await page.screenshot({
         path: "/tmp/visit-budget-override-confirmation.png",
         fullPage: false,
@@ -113,7 +138,7 @@ test("limits re-entry and grants a private override session", async () => {
     await expect(
       page.getByText("confirmation code does not match"),
     ).toBeVisible();
-    await expect(tens).toHaveValue("2");
+    await expect(duration).toHaveAttribute("aria-valuenow", "25");
 
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).toBeHidden();
@@ -135,7 +160,7 @@ test("limits re-entry and grants a private override session", async () => {
         session: await chrome.storage.session.get(null),
       };
     });
-    expect(JSON.stringify(storedState)).not.toContain("intention");
+    expect(JSON.stringify(storedState)).not.toContain("reason");
   });
 });
 
@@ -639,12 +664,14 @@ async function addRule(
   extensionId: string,
   input: {
     website: string;
-    mode: "visit-limit" | "permanent-block";
+    mode: "visit-limit" | "time-limit" | "permanent-block";
     limit?: number;
+    timeLimit?: number;
     countTabReturns?: boolean;
   },
 ): Promise<void> {
   await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.getByRole("button", { name: "Add website" }).click();
   await page.locator("#website").fill(input.website);
   await page.locator("#mode").selectOption(input.mode);
   if (input.mode === "visit-limit") {
@@ -652,6 +679,11 @@ async function addRule(
     if (input.countTabReturns) {
       await page.locator("#count-tab-returns").check();
     }
+  }
+  if (input.mode === "time-limit") {
+    await page
+      .locator("#daily-time-limit")
+      .selectOption(String(input.timeLimit ?? 30));
   }
   await page.getByRole("button", { name: "Save rule" }).click();
   await expect(

@@ -114,7 +114,7 @@ stepper, with clear boundaries, pointer controls, and keyboard adjustment.
 
 ## Phase 4 — Release one coherent 1.1.0 package
 
-Status: todo
+Status: done · 2026-09-14
 
 Checkpoint: yes — the version 1.1.0 ZIP, local product contract, privacy
 policy, Store listing copy, and reviewer instructions describe one truthful
@@ -122,12 +122,14 @@ combined update.
 
 - Does: update product and Store materials, retire all written-intention and
   fixed-ten-minute claims, document local active-time semantics and the
-  next-day mode switch, bump versions, and create the production ZIP.
+  next-day mode switch, bump versions, create the production ZIP, and capture
+  the current Store screenshots from real extension journeys.
 - Stories: US-1 through US-6
-- Files: `README.md`, `docs/chrome-web-store-submission.md`,
+- Files: `README.md`, `CHANGELOG.md`, `docs/chrome-web-store-submission.md`,
   `docs/privacy-policy.md`, `public/manifest.json`, `package.json`,
   `package-lock.json`, `docs/PRD.md`, `docs/GLOSSARY.md`, `ARCHITECTURE.md`,
-  `docs/plans/deliberate-budgets-1-1/plan.md`, `artifacts/`
+  `docs/plans/deliberate-budgets-1-1/plan.md`,
+  `tests/e2e/visit-budget.spec.ts`, `artifacts/`
 - Test: `npm run check`, `npm run test:e2e`, `npm run package`, ZIP inspection,
   and manual verification of visit, time, override, and permanent-block
   journeys.

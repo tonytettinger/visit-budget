@@ -13,7 +13,9 @@
   var saved = null;
   try {
     saved = localStorage.getItem(KEY);
-  } catch (e) {}
+  } catch {
+    // Storage can be unavailable in a privacy-restricted browser context.
+  }
   if (saved === "light") root.setAttribute("data-theme", "light");
 
   var btn = document.querySelector(".theme-toggle");
@@ -31,7 +33,9 @@
         toLight
           ? localStorage.setItem(KEY, "light")
           : localStorage.removeItem(KEY);
-      } catch (e) {}
+      } catch {
+        // Storage can be unavailable in a privacy-restricted browser context.
+      }
       label();
     });
   }

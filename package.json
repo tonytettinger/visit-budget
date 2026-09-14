@@ -1,9 +1,9 @@
 {
   "name": "visit-budget",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
-  "description": "A local-first Chrome extension for daily website visit budgets.",
+  "description": "A local-first Chrome extension for visit budgets, active-time limits, and permanent blocks.",
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",

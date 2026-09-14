@@ -96,9 +96,8 @@ genuinely needed.
 - Repeatable emergency overrides for exhausted visit- and time-budget rules,
   each lasting
   5–60 minutes in five-minute steps.
-- A two-step override interface: 15-second pause plus an accessible two-digit
-  duration picker, followed by a separate confirmation dialog containing a
-  random code.
+- A two-step override interface: 15-second pause plus an accessible duration
+  stepper, followed by a separate confirmation dialog containing a random code.
 - Local-only rules, usage, challenge state, and enforcement.
 
 ## User stories
@@ -126,9 +125,8 @@ US-4: As a user with an exhausted visit or time budget, I can deliberately reque
 bounded period of temporary access.
 
 AC: Given an exhausted visit- or time-budget rule, when 15 seconds have elapsed, I can
-choose 5–60 minutes in five-minute steps with keyboard-operable digit
-selectors; a separate confirmation interface displays a random five-character
-code.
+choose 5–60 minutes in five-minute steps with a keyboard-operable stepper; a
+separate confirmation interface displays a random five-character code.
 
 US-5: As a user, I must prove deliberate intent before access is restored.
 
@@ -182,8 +180,8 @@ ideas, not part of the public 1.1 promise.
   remains beneath the blocking overlay; a future navigation is also blocked.
 - After an override expires, the next attempt starts again with the full pause,
   duration choice, and code flow.
-- The duration picker never presents an invalid value: 00 minutes becomes five
-  minutes and 65 minutes becomes 60 minutes before confirmation is available.
+- The duration stepper never leaves the valid 5–60-minute range, and disables
+  the boundary action at five and 60 minutes.
 - The code uses unambiguous letters and digits, is case-sensitive, and is
   regenerated when the confirmation interface is reopened.
 - An incorrect code preserves the selected duration; cancelling or closing the
