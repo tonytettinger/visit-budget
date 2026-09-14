@@ -76,7 +76,7 @@ duration picker, and code confirmation on both blocked surfaces.
 
 ## Phase 3A — Refine the duration control and time-budget alignment
 
-Status: in review
+Status: done · 2026-09-14 · 4f2cd81
 
 Checkpoint: yes — the duration picker reads as one compact paired control, and
 the active-time explanation no longer distorts the settings grid.
@@ -90,6 +90,26 @@ the active-time explanation no longer distorts the settings grid.
 - Test: no automated test — semantic controls and interaction contracts remain
   unchanged; verify the updated built surfaces visually.
 - Commit: `style(ui): refine time budget controls`
+- Rollback: revert
+
+## Phase 3B — Replace the duration case with a calm stepper
+
+Status: done · 2026-09-14
+
+Checkpoint: yes — both blocked surfaces present one compact five-minute
+stepper, with clear boundaries, pointer controls, and keyboard adjustment.
+
+- Does: replace the code-like paired digit control with one compact duration
+  stepper; keep the existing 5–60 minute range, default, countdown, and
+  confirmation contract unchanged on both blocked surfaces.
+- Stories: US-3, US-4
+- Files: `public/blocked.html`, `public/styles.css`, `src/ui/blocked.ts`,
+  `src/content/guard.ts`, `docs/DESIGN.md`,
+  `docs/plans/deliberate-budgets-1-1/plan.md`
+- Test: no automated test — this is presentation and equivalent UI wiring;
+  run existing unit tests and visually verify pointer, keyboard, and boundary
+  states after building.
+- Commit: `style(ui): replace duration picker with stepper`
 - Rollback: revert
 
 ## Phase 4 — Release one coherent 1.1.0 package

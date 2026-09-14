@@ -177,12 +177,14 @@ function renderGate(
       .override-warning { font-size: 16px; font-weight: 750; margin: 22px 0 6px; }
       .pass-note, .error { color: #5f6673; font-size: 13px; line-height: 1.5; margin: 0; }
       .pause-countdown { color: #155de0; font-size: 13px; font-weight: 650; line-height: 1.5; margin: 8px 0 0; }
-      .duration-picker { align-items: center; display: flex; gap: 10px; margin-top: 8px; }
-      .duration-case { align-items: center; background: #fff; border: 1px solid #c9ced9; border-radius: 12px; box-shadow: 0 1px 2px rgba(23, 25, 31, 0.04); display: flex; padding: 4px; }
-      .duration-case select { background: transparent; border: 0; border-radius: 8px; color: #17191f; font: 700 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 52px; padding: 0 7px; text-align: center; width: 62px; }
-      .duration-case > span { background: #d8dce5; height: 30px; width: 1px; }
-      .duration-case select:focus-visible { box-shadow: 0 0 0 3px #eaf1ff; outline: 2px solid #155de0; outline-offset: -2px; }
-      .duration-picker span { color: #5f6673; font-size: 13px; }
+      .duration-picker { align-items: center; background: #fff; border: 1px solid #c9ced9; border-radius: 10px; box-shadow: 0 1px 2px rgba(23, 25, 31, 0.04); display: inline-grid; grid-template-columns: 40px minmax(76px, auto) 40px; margin-top: 8px; overflow: hidden; }
+      .duration-picker button { background: transparent; border: 0; color: #5f6673; cursor: pointer; font-size: 20px; font-weight: 500; min-height: 44px; padding: 0; }
+      .duration-picker button:first-child { border-right: 1px solid #d8dce5; }
+      .duration-picker button:last-child { border-left: 1px solid #d8dce5; }
+      .duration-picker button:hover:not(:disabled) { background: #f6f7f9; color: #17191f; }
+      .duration-picker button:disabled { color: #c9ced9; cursor: default; }
+      .duration-value { align-items: center; color: #17191f; display: flex; font: 650 16px/1 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; justify-content: center; min-height: 44px; padding: 0 12px; }
+      .duration-picker button:focus-visible, .duration-value:focus-visible { box-shadow: 0 0 0 3px #eaf1ff; outline: 2px solid #155de0; outline-offset: -2px; }
       .error { color: #9a2f20; min-height: 20px; }
       dialog { background: transparent; border: 0; max-width: 430px; padding: 0; width: calc(100% - 32px); }
       dialog::backdrop { background: rgba(23, 25, 31, 0.42); }
@@ -248,12 +250,9 @@ function renderOverrideForm(
     <p class="pause-countdown" role="status" aria-live="polite"></p>
     <label id="visit-budget-duration-label">Temporary access</label>
     <div class="duration-picker" role="group" aria-labelledby="visit-budget-duration-label">
-      <div class="duration-case">
-        <select class="duration-tens" aria-label="Tens of minutes"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
-        <span aria-hidden="true"></span>
-        <select class="duration-ones" aria-label="Ones of minutes"><option value="0">0</option><option value="5" selected>5</option></select>
-      </div>
-      <span>minutes</span>
+      <button class="decrease-duration" type="button" aria-label="Decrease temporary access by 5 minutes">−</button>
+      <div class="duration-value" role="spinbutton" tabindex="0" aria-valuemin="5" aria-valuemax="60" aria-valuenow="5" aria-valuetext="5 minutes">5 min</div>
+      <button class="increase-duration" type="button" aria-label="Increase temporary access by 5 minutes">+</button>
     </div>
     <div class="actions" style="margin-top: 10px">
       <button class="secondary override" type="button" disabled></button>
@@ -273,8 +272,15 @@ function renderOverrideForm(
       </div>
     </dialog>
   `;
-  const tens = requiredElement<HTMLSelectElement>(shadow, ".duration-tens");
-  const ones = requiredElement<HTMLSelectElement>(shadow, ".duration-ones");
+  const decreaseDuration = requiredElement<HTMLButtonElement>(
+    shadow,
+    ".decrease-duration",
+  );
+  const increaseDuration = requiredElement<HTMLButtonElement>(
+    shadow,
+    ".increase-duration",
+  );
+  const durationValue = requiredElement<HTMLElement>(shadow, ".duration-value");
   const button = requiredElement<HTMLButtonElement>(shadow, ".override");
   const error = requiredElement<HTMLElement>(shadow, ".gate-error");
   const pauseCountdown = requiredElement<HTMLElement>(
@@ -296,13 +302,21 @@ function renderOverrideForm(
     ".confirm-override",
   );
   let previousPauseSeconds: number | undefined;
+  let durationMinutes = 5;
+
+  const renderDuration = (): void => {
+    durationValue.textContent = `${durationMinutes} min`;
+    durationValue.setAttribute("aria-valuenow", String(durationMinutes));
+    durationValue.setAttribute("aria-valuetext", `${durationMinutes} minutes`);
+    decreaseDuration.disabled = durationMinutes === 5;
+    increaseDuration.disabled = durationMinutes === 60;
+  };
 
   const update = (): void => {
     const seconds = Math.max(
       0,
       Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
     );
-    const durationMinutes = selectedDurationMinutes(tens, ones);
     button.textContent =
       seconds > 0
         ? `Override (${seconds}s)`
@@ -314,31 +328,38 @@ function renderOverrideForm(
           : "The pause is complete. You can continue when ready.";
       previousPauseSeconds = seconds;
     }
-    button.disabled = seconds > 0 || !isValidDuration(durationMinutes);
+    button.disabled = seconds > 0;
     if (seconds === 0) {
       clearInterval(timer);
     }
   };
   const timer = window.setInterval(update, 250);
-  const normaliseDuration = (): void => {
-    if (tens.value === "0" && ones.value === "0") {
-      ones.value = "5";
-    }
-    if (tens.value === "6" && ones.value === "5") {
-      ones.value = "0";
-    }
+  const changeDuration = (amount: number): void => {
+    durationMinutes = Math.min(60, Math.max(5, durationMinutes + amount));
+    renderDuration();
     update();
   };
-  tens.addEventListener("change", normaliseDuration);
-  ones.addEventListener("change", normaliseDuration);
-  tens.focus();
+  decreaseDuration.addEventListener("click", () => changeDuration(-5));
+  increaseDuration.addEventListener("click", () => changeDuration(5));
+  durationValue.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      changeDuration(-5);
+    }
+    if (event.key === "ArrowUp" || event.key === "ArrowRight") {
+      event.preventDefault();
+      changeDuration(5);
+    }
+  });
+  renderDuration();
+  durationValue.focus();
   button.addEventListener("click", () => {
     button.disabled = true;
     error.textContent = "";
     void sendRequest<OverrideConfirmationResult>({
       type: "START_OVERRIDE_CONFIRMATION",
       ruleId: context.rule.id,
-      durationMinutes: selectedDurationMinutes(tens, ones),
+      durationMinutes,
     })
       .then((result) => {
         codeOutput.textContent = result.code;
@@ -346,7 +367,7 @@ function renderOverrideForm(
           shadow,
           "#visit-budget-confirmation-description",
         ).textContent =
-          `Type this code exactly to start ${selectedDurationMinutes(tens, ones)} minutes of temporary access.`;
+          `Type this code exactly to start ${durationMinutes} minutes of temporary access.`;
         codeInput.value = "";
         confirmationError.textContent = "";
         dialog.showModal();
@@ -384,7 +405,7 @@ function renderOverrideForm(
     void sendRequest<OverrideSessionResult>({
       type: "CONFIRM_OVERRIDE",
       ruleId: context.rule.id,
-      durationMinutes: selectedDurationMinutes(tens, ones),
+      durationMinutes,
       code: codeInput.value,
     })
       .then(() => {
@@ -392,10 +413,7 @@ function renderOverrideForm(
         dialog.close();
         removeGate();
         removeCurtain();
-        showOverrideToast(
-          context.rule.hostname,
-          selectedDurationMinutes(tens, ones),
-        );
+        showOverrideToast(context.rule.hostname, durationMinutes);
       })
       .catch((caught: unknown) => {
         confirmationError.textContent = errorMessage(caught);
@@ -432,19 +450,6 @@ function showOverrideToast(hostname: string, durationMinutes: number): void {
     progress: 100,
     ringLabel: `${durationMinutes}m`,
   });
-}
-
-function selectedDurationMinutes(
-  tens: HTMLSelectElement,
-  ones: HTMLSelectElement,
-): number {
-  return Number(tens.value) * 10 + Number(ones.value);
-}
-
-function isValidDuration(durationMinutes: number): boolean {
-  return (
-    durationMinutes >= 5 && durationMinutes <= 60 && durationMinutes % 5 === 0
-  );
 }
 
 interface ToastContent {

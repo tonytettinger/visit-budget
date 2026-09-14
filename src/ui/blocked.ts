@@ -16,18 +16,25 @@ requiredElement<HTMLButtonElement>("#go-back").addEventListener(
   "click",
   () => void leaveForNow(),
 );
-requiredElement<HTMLSelectElement>("#override-tens").addEventListener(
-  "change",
-  () => {
-    normaliseDurationPicker();
-    updateOverrideButton();
-  },
+requiredElement<HTMLButtonElement>("#decrease-duration").addEventListener(
+  "click",
+  () => changeDuration(-5),
 );
-requiredElement<HTMLSelectElement>("#override-ones").addEventListener(
-  "change",
-  () => {
-    normaliseDurationPicker();
-    updateOverrideButton();
+requiredElement<HTMLButtonElement>("#increase-duration").addEventListener(
+  "click",
+  () => changeDuration(5),
+);
+requiredElement<HTMLElement>("#override-duration-value").addEventListener(
+  "keydown",
+  (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      changeDuration(-5);
+    }
+    if (event.key === "ArrowUp" || event.key === "ArrowRight") {
+      event.preventDefault();
+      changeDuration(5);
+    }
   },
 );
 requiredElement<HTMLButtonElement>("#continue-override").addEventListener(
@@ -52,6 +59,7 @@ requiredElement<HTMLDialogElement>("#override-confirmation").addEventListener(
 
 let context: BlockedContext | undefined;
 let previousPauseSeconds: number | undefined;
+let durationMinutes = 5;
 void load();
 
 async function load(): Promise<void> {
@@ -97,8 +105,9 @@ function render(
   overrideSection.hidden = !canOverride;
   if (canOverride) {
     countdownTimer = window.setInterval(updateOverrideButton, 250);
+    renderDurationPicker();
     updateOverrideButton();
-    requiredElement<HTMLSelectElement>("#override-tens").focus();
+    requiredElement<HTMLElement>("#override-duration-value").focus();
   }
 }
 
@@ -122,7 +131,6 @@ function updateOverrideButton(): void {
     0,
     Math.ceil((context.challengeReadyAt - Date.now()) / 1000),
   );
-  const durationMinutes = selectedDurationMinutes();
   button.textContent =
     seconds > 0
       ? `Override (${seconds}s)`
@@ -135,7 +143,7 @@ function updateOverrideButton(): void {
         : "The pause is complete. You can continue when ready.";
     previousPauseSeconds = seconds;
   }
-  button.disabled = seconds > 0 || !isValidDuration(durationMinutes);
+  button.disabled = seconds > 0;
   if (seconds === 0 && countdownTimer !== undefined) {
     window.clearInterval(countdownTimer);
     countdownTimer = undefined;
@@ -153,7 +161,7 @@ async function beginConfirmation(): Promise<void> {
     const result = await sendRequest<OverrideConfirmationResult>({
       type: "START_OVERRIDE_CONFIRMATION",
       ruleId: context.rule.id,
-      durationMinutes: selectedDurationMinutes(),
+      durationMinutes,
     });
     showConfirmation(result.code);
   } catch (error) {
@@ -165,7 +173,7 @@ async function beginConfirmation(): Promise<void> {
 function showConfirmation(code: string): void {
   requiredElement<HTMLElement>("#override-code").textContent = code;
   requiredElement<HTMLElement>("#confirmation-description").textContent =
-    `Type this code exactly to start ${selectedDurationMinutes()} minutes of temporary access.`;
+    `Type this code exactly to start ${durationMinutes} minutes of temporary access.`;
   requiredElement<HTMLInputElement>("#confirmation-code").value = "";
   renderConfirmationError("");
   const dialog = requiredElement<HTMLDialogElement>("#override-confirmation");
@@ -197,7 +205,7 @@ async function confirmOverride(): Promise<void> {
     await sendRequest<OverrideSessionResult>({
       type: "CONFIRM_OVERRIDE",
       ruleId: context.rule.id,
-      durationMinutes: selectedDurationMinutes(),
+      durationMinutes,
       code: requiredElement<HTMLInputElement>("#confirmation-code").value,
     });
     location.replace(targetForRule(context.rule));
@@ -232,31 +240,21 @@ function renderConfirmationError(message: string): void {
   requiredElement<HTMLElement>("#confirmation-error").textContent = message;
 }
 
-function selectedDurationMinutes(): number {
-  const tens = Number(
-    requiredElement<HTMLSelectElement>("#override-tens").value,
-  );
-  const ones = Number(
-    requiredElement<HTMLSelectElement>("#override-ones").value,
-  );
-  return tens * 10 + ones;
+function changeDuration(amount: number): void {
+  durationMinutes = Math.min(60, Math.max(5, durationMinutes + amount));
+  renderDurationPicker();
+  updateOverrideButton();
 }
 
-function normaliseDurationPicker(): void {
-  const tens = requiredElement<HTMLSelectElement>("#override-tens");
-  const ones = requiredElement<HTMLSelectElement>("#override-ones");
-  if (tens.value === "0" && ones.value === "0") {
-    ones.value = "5";
-  }
-  if (tens.value === "6" && ones.value === "5") {
-    ones.value = "0";
-  }
-}
-
-function isValidDuration(durationMinutes: number): boolean {
-  return (
-    durationMinutes >= 5 && durationMinutes <= 60 && durationMinutes % 5 === 0
-  );
+function renderDurationPicker(): void {
+  const value = requiredElement<HTMLElement>("#override-duration-value");
+  value.textContent = `${durationMinutes} min`;
+  value.setAttribute("aria-valuenow", String(durationMinutes));
+  value.setAttribute("aria-valuetext", `${durationMinutes} minutes`);
+  requiredElement<HTMLButtonElement>("#decrease-duration").disabled =
+    durationMinutes === 5;
+  requiredElement<HTMLButtonElement>("#increase-duration").disabled =
+    durationMinutes === 60;
 }
 
 function targetForRule(rule: SiteRule): string {

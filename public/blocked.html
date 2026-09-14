@@ -44,24 +44,37 @@
             aria-labelledby="override-duration-label"
           >
             <span id="override-duration-label">Temporary access</span>
-            <div class="duration-picker">
-              <div class="duration-case">
-                <select id="override-tens" aria-label="Tens of minutes">
-                  <option value="0">0</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                </select>
-                <span aria-hidden="true"></span>
-                <select id="override-ones" aria-label="Ones of minutes">
-                  <option value="0">0</option>
-                  <option value="5" selected>5</option>
-                </select>
+            <div
+              class="duration-picker"
+              role="group"
+              aria-labelledby="override-duration-label"
+            >
+              <button
+                id="decrease-duration"
+                type="button"
+                aria-label="Decrease temporary access by 5 minutes"
+              >
+                −
+              </button>
+              <div
+                class="duration-value"
+                id="override-duration-value"
+                role="spinbutton"
+                tabindex="0"
+                aria-valuemin="5"
+                aria-valuemax="60"
+                aria-valuenow="5"
+                aria-valuetext="5 minutes"
+              >
+                5 min
               </div>
-              <span>minutes</span>
+              <button
+                id="increase-duration"
+                type="button"
+                aria-label="Increase temporary access by 5 minutes"
+              >
+                +
+              </button>
             </div>
           </div>
           <button

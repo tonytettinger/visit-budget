@@ -83,14 +83,13 @@ the two budget types states that it applies tomorrow before the user saves.
 counting behavior. Advanced options remain visually subordinate to hostname,
 budget type, and daily limit.
 
-**Override duration picker** — Two side-by-side digit selectors choose a
-5–60-minute duration in five-minute steps. Each selector is a native select,
-so arrow keys work without exposing a free-form text field. Together, the
-digits sit inside one compact time case with a shared outline and central
-divider, rather than two unrelated fields. The unit label remains outside the
-case so “05 minutes” reads as one duration. Invalid visual combinations are
-normalised immediately; the continue action remains disabled until the
-15-second pause has ended.
+**Override duration stepper** — One compact control chooses a 5–60-minute
+duration in five-minute steps. Subtle minus and plus controls flank a single
+plain-language value such as “15 min”; Arrow keys adjust the focused value.
+The minimum and maximum actions are disabled at their boundaries. This keeps
+the choice familiar and legible rather than presenting a code-like pair of
+digits. The continue action remains disabled until the 15-second pause has
+ended.
 
 **Time-budget help** — The focused-tab explanation is a full-width helper line
 below the mode-and-limit row. It never changes the height or vertical alignment
