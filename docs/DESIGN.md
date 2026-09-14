@@ -85,9 +85,16 @@ budget type, and daily limit.
 
 **Override duration picker** — Two side-by-side digit selectors choose a
 5–60-minute duration in five-minute steps. Each selector is a native select,
-so arrow keys work without exposing a free-form text field. Invalid visual
-combinations are normalised immediately; the continue action remains disabled
-until the 15-second pause has ended.
+so arrow keys work without exposing a free-form text field. Together, the
+digits sit inside one compact time case with a shared outline and central
+divider, rather than two unrelated fields. The unit label remains outside the
+case so “05 minutes” reads as one duration. Invalid visual combinations are
+normalised immediately; the continue action remains disabled until the
+15-second pause has ended.
+
+**Time-budget help** — The focused-tab explanation is a full-width helper line
+below the mode-and-limit row. It never changes the height or vertical alignment
+of the limit selector beside the mode picker.
 
 **Confirmation dialog** — Modal with the heading “Are you sure?”, concise
 consequence text, a visually readable five-character code, one exact-entry

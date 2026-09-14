@@ -476,6 +476,13 @@ textarea:focus {
   line-height: 1.45;
 }
 
+.field-help {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+  margin: -7px 0 1px;
+}
+
 input,
 select,
 textarea {
@@ -843,22 +850,46 @@ textarea {
 .duration-picker {
   align-items: center;
   display: flex;
-  gap: 6px;
+  gap: 10px;
   margin-top: 8px;
 }
 
-.duration-picker select {
-  appearance: auto;
+.duration-case {
+  align-items: center;
   background: var(--background);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgb(23 25 31 / 4%);
+  display: flex;
+  padding: 4px;
+}
+
+.duration-case select {
+  appearance: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 21px;
   font-weight: 700;
   line-height: 1;
-  min-height: 46px;
-  padding: 0 8px;
+  min-height: 56px;
+  padding: 0 7px;
+  text-align: center;
+  width: 66px;
+}
+
+.duration-case > span {
+  background: var(--border);
+  height: 32px;
+  width: 1px;
+}
+
+.duration-case select:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .duration-picker span {

@@ -18,11 +18,17 @@ requiredElement<HTMLButtonElement>("#go-back").addEventListener(
 );
 requiredElement<HTMLSelectElement>("#override-tens").addEventListener(
   "change",
-  updateOverrideButton,
+  () => {
+    normaliseDurationPicker();
+    updateOverrideButton();
+  },
 );
 requiredElement<HTMLSelectElement>("#override-ones").addEventListener(
   "change",
-  updateOverrideButton,
+  () => {
+    normaliseDurationPicker();
+    updateOverrideButton();
+  },
 );
 requiredElement<HTMLButtonElement>("#continue-override").addEventListener(
   "click",
@@ -234,6 +240,17 @@ function selectedDurationMinutes(): number {
     requiredElement<HTMLSelectElement>("#override-ones").value,
   );
   return tens * 10 + ones;
+}
+
+function normaliseDurationPicker(): void {
+  const tens = requiredElement<HTMLSelectElement>("#override-tens");
+  const ones = requiredElement<HTMLSelectElement>("#override-ones");
+  if (tens.value === "0" && ones.value === "0") {
+    ones.value = "5";
+  }
+  if (tens.value === "6" && ones.value === "5") {
+    ones.value = "0";
+  }
 }
 
 function isValidDuration(durationMinutes: number): boolean {

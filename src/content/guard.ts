@@ -177,8 +177,11 @@ function renderGate(
       .override-warning { font-size: 16px; font-weight: 750; margin: 22px 0 6px; }
       .pass-note, .error { color: #5f6673; font-size: 13px; line-height: 1.5; margin: 0; }
       .pause-countdown { color: #155de0; font-size: 13px; font-weight: 650; line-height: 1.5; margin: 8px 0 0; }
-      .duration-picker { align-items: center; display: flex; gap: 6px; margin-top: 8px; }
-      .duration-picker select { border: 1px solid #c9ced9; border-radius: 8px; color: #17191f; font: 700 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 44px; padding: 0 8px; }
+      .duration-picker { align-items: center; display: flex; gap: 10px; margin-top: 8px; }
+      .duration-case { align-items: center; background: #fff; border: 1px solid #c9ced9; border-radius: 12px; box-shadow: 0 1px 2px rgba(23, 25, 31, 0.04); display: flex; padding: 4px; }
+      .duration-case select { background: transparent; border: 0; border-radius: 8px; color: #17191f; font: 700 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 52px; padding: 0 7px; text-align: center; width: 62px; }
+      .duration-case > span { background: #d8dce5; height: 30px; width: 1px; }
+      .duration-case select:focus-visible { box-shadow: 0 0 0 3px #eaf1ff; outline: 2px solid #155de0; outline-offset: -2px; }
       .duration-picker span { color: #5f6673; font-size: 13px; }
       .error { color: #9a2f20; min-height: 20px; }
       dialog { background: transparent; border: 0; max-width: 430px; padding: 0; width: calc(100% - 32px); }
@@ -245,8 +248,11 @@ function renderOverrideForm(
     <p class="pause-countdown" role="status" aria-live="polite"></p>
     <label id="visit-budget-duration-label">Temporary access</label>
     <div class="duration-picker" role="group" aria-labelledby="visit-budget-duration-label">
-      <select class="duration-tens" aria-label="Tens of minutes"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
-      <select class="duration-ones" aria-label="Ones of minutes"><option value="0">0</option><option value="5" selected>5</option></select>
+      <div class="duration-case">
+        <select class="duration-tens" aria-label="Tens of minutes"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
+        <span aria-hidden="true"></span>
+        <select class="duration-ones" aria-label="Ones of minutes"><option value="0">0</option><option value="5" selected>5</option></select>
+      </div>
       <span>minutes</span>
     </div>
     <div class="actions" style="margin-top: 10px">
@@ -314,8 +320,17 @@ function renderOverrideForm(
     }
   };
   const timer = window.setInterval(update, 250);
-  tens.addEventListener("change", update);
-  ones.addEventListener("change", update);
+  const normaliseDuration = (): void => {
+    if (tens.value === "0" && ones.value === "0") {
+      ones.value = "5";
+    }
+    if (tens.value === "6" && ones.value === "5") {
+      ones.value = "0";
+    }
+    update();
+  };
+  tens.addEventListener("change", normaliseDuration);
+  ones.addEventListener("change", normaliseDuration);
   tens.focus();
   button.addEventListener("click", () => {
     button.disabled = true;

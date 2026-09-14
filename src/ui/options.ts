@@ -392,11 +392,13 @@ function parsePaths(value: string, fallback?: string): string[] {
 function updateModeVisibility(): void {
   const limitField = requiredElement<HTMLElement>("#limit-field");
   const timeLimitField = requiredElement<HTMLElement>("#time-limit-field");
+  const timeLimitHelp = requiredElement<HTMLElement>("#time-limit-help");
   const tabReturnField = requiredElement<HTMLElement>("#tab-return-field");
   const isLimit = mode.value === "visit-limit";
   const isTimeLimit = mode.value === "time-limit";
   limitField.hidden = !isLimit;
   timeLimitField.hidden = !isTimeLimit;
+  timeLimitHelp.hidden = !isTimeLimit;
   tabReturnField.hidden = !isLimit;
   dailyLimit.required = isLimit;
   dailyTimeLimit.required = isTimeLimit;

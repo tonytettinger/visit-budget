@@ -49,7 +49,7 @@ Checkpoint: no
 
 ## Phase 3 — Make the boundary and override flow understandable
 
-Status: in review
+Status: done
 
 Checkpoint: yes — settings clearly choose visit budget, time budget, or block;
 an exhausted rule presents the prominent pause countdown, keyboard-operable
@@ -72,6 +72,24 @@ duration picker, and code confirmation on both blocked surfaces.
   only the selected duration after confirmation, and displays a time rule's
   remaining allowance.
 - Commit: `feat(ui): add time budgets and duration overrides`
+- Rollback: revert
+
+## Phase 3A — Refine the duration control and time-budget alignment
+
+Status: in review
+
+Checkpoint: yes — the duration picker reads as one compact paired control, and
+the active-time explanation no longer distorts the settings grid.
+
+- Does: replace the two detached duration dropdowns with a shared, keyboard
+  operable paired time case on both blocked surfaces; move the active-time help
+  text below the two-column settings row.
+- Stories: US-3, US-4
+- Files: `public/blocked.html`, `public/options.html`, `public/styles.css`,
+  `src/content/guard.ts`, `docs/DESIGN.md`, `docs/plans/deliberate-budgets-1-1/plan.md`
+- Test: no automated test — semantic controls and interaction contracts remain
+  unchanged; verify the updated built surfaces visually.
+- Commit: `style(ui): refine time budget controls`
 - Rollback: revert
 
 ## Phase 4 — Release one coherent 1.1.0 package
